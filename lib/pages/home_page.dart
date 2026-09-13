@@ -6,6 +6,10 @@ import '../widgets/reusable_widgets.dart';
 import 'hives_page.dart';
 import 'join_hive_page.dart';
 import 'hive_overview_page.dart';
+import 'create_hive_page.dart';
+import 'study_plan_page.dart';
+import 'reminder_overview_page.dart';
+import 'chat_details_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -16,6 +20,15 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final DateTime _examDate = DateTime(2026, 6, 15);
+  final _announcementController = TextEditingController();
+  final _selectedAnnouncementHives = <String>{'Physics Hive'};
+  final _createdHives = const ['Physics Hive', 'Research Circle'];
+
+  @override
+  void dispose() {
+    _announcementController.dispose();
+    super.dispose();
+  }
 
   int get _daysUntilExam {
     final now = DateTime.now();
@@ -25,6 +38,7 @@ class _HomePageState extends State<HomePage> {
     return diff > 0 ? diff : 0;
   }
 
+  //TODAY'S STUDY PLAN SECTION
   @override
   Widget build(BuildContext context) {
     return HoneycombBackground(
@@ -42,7 +56,13 @@ class _HomePageState extends State<HomePage> {
             SizedBox(height: 20),
             SectionHeader(
               title: "Today's Study Plan",
-              trailing: TextButton(onPressed: () {}, child: Text('See All')),
+              trailing: TextButton(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const StudyPlanPage()),
+                ),
+                child: Text('See All'),
+              ),
             ),
             SizedBox(height: 12),
             _buildStudyPlanItems(context),
@@ -93,7 +113,10 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
                 child: IconButton(
-                  onPressed: () {},
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const CreateHivePage()),
+                  ),
                   icon: Icon(Icons.add, color: Colors.white, size: 20),
                   padding: EdgeInsets.all(4),
                   constraints: BoxConstraints(),
@@ -134,7 +157,9 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           child: IconButton(
-            onPressed: () {},
+            onPressed: () {
+              _showTutorial(context);
+            },
             icon: Stack(
               children: [
                 Icon(Icons.help_outline, color: AppColors.honeyDark, size: 24),
@@ -157,7 +182,6 @@ class _HomePageState extends State<HomePage> {
               borderRadius: BorderRadius.circular(12),
             ),
           ),
-          icon: Icon(Icons.qr_code_scanner, color: Colors.white, size: 18),
           label: Text(
             'Join with Code',
             style: TextStyle(
@@ -190,7 +214,7 @@ class _HomePageState extends State<HomePage> {
                 text: 'Welcome back! ',
                 style: Theme.of(context).textTheme.displayMedium,
               ),
-              TextSpan(text: '🌻', style: TextStyle(fontSize: 28)),
+              TextSpan(text: '🐝', style: TextStyle(fontSize: 28)),
             ],
           ),
         ),
@@ -241,7 +265,7 @@ class _HomePageState extends State<HomePage> {
                   'Physics Midterms',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -250,7 +274,7 @@ class _HomePageState extends State<HomePage> {
                   '$_daysUntilExam days left',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 24,
+                    fontSize: 12,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -260,7 +284,7 @@ class _HomePageState extends State<HomePage> {
           Column(
             children: [
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
@@ -270,24 +294,29 @@ class _HomePageState extends State<HomePage> {
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
-                    fontSize: 12,
+                    fontSize: 10,
                   ),
                 ),
               ),
-              SizedBox(height: 8),
+              SizedBox(height: 4),
               TextButton(
-                onPressed: () {},
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const PhysicsMidtermOverviewPage(),
+                  ),
+                ),
                 style: TextButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: AppColors.honeyDark,
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
                 child: Text(
                   'View Details',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -629,6 +658,7 @@ class _HomePageState extends State<HomePage> {
           ),
           SizedBox(height: 8),
           TextField(
+            controller: _announcementController,
             decoration: InputDecoration(
               hintText: 'e.g. Reminder: Tomorrow quiz',
               filled: true,
@@ -643,8 +673,145 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
+          SizedBox(height: 14),
+          Text(
+            'Select Hives',
+            style: Theme.of(context).textTheme.titleMedium
+                ?.copyWith(fontSize: 14),
+          ),
+          ..._createdHives.map(
+            (hive) => CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              title: Text(hive),
+              value: _selectedAnnouncementHives.contains(hive),
+              onChanged: (value) => setState(() {
+                if (value == true) {
+                  _selectedAnnouncementHives.add(hive);
+                } else {
+                  _selectedAnnouncementHives.remove(hive);
+                }
+              }),
+            ),
+          ),
+          SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: _sendAnnouncement,
+              icon: Icon(Icons.send),
+              label: Text('Send Announcement'),
+            ),
+          ),
         ],
       ),
     );
   }
+
+  void _sendAnnouncement() {
+    final announcement = _announcementController.text.trim();
+    if (announcement.isEmpty || _selectedAnnouncementHives.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Add an announcement and select at least one Hive.'),
+        ),
+      );
+      return;
+    }
+    hiveAnnouncements.add(announcement);
+    _announcementController.clear();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Announcement sent to ${_selectedAnnouncementHives.length} Hive(s).',
+        ),
+      ),
+    );
+  }
+
+  void _showTutorial(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Getting Started',
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'A quick walkthrough of the main things you can do.',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 18),
+              _tutorialStep(
+                '1',
+                'Join a Hive',
+                'Enter a 6-digit code to join a study room created by a friend or classmate.',
+              ),
+              _tutorialStep(
+                '2',
+                'Create a Hive',
+                'Create your own study room or group, then share the code with friends to study together.',
+              ),
+              _tutorialStep(
+                '3',
+                'Create & Take Quizzes',
+                'Make your own quizzes or let AI generate quizzes based on the topic you are studying.',
+              ),
+              _tutorialStep(
+                '4',
+                'Earn Honeycombs',
+                'Complete quizzes to earn Honeycombs, track your progress, and make studying more rewarding.',
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _tutorialStep(
+    String number,
+    String title,
+    String description,
+  ) => Padding(
+    padding: const EdgeInsets.only(bottom: 14),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CircleAvatar(
+          radius: 16,
+          backgroundColor: AppColors.honeyDark,
+          child: Text(
+            number,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              Text(
+                description,
+                style: TextStyle(color: AppColors.textSecondary, height: 1.35),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
 }

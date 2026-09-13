@@ -13,54 +13,89 @@ class HivesPage extends StatefulWidget {
   State<HivesPage> createState() => _HivesPageState();
 }
 
+final List<Map<String, dynamic>> studyHiveHives = [
+  {
+    'name': 'Physics Hive',
+    'subject': 'Physics',
+    'members': 7,
+    'mastery': 78,
+    'icon': '🧪',
+    'color': Color(0xFF42A5F5),
+    'owned': true,
+    'joined': true,
+    'favorite': true,
+    'membersList': ['Jai', 'Kirs', 'Derick', 'Kester', 'Clarine', 'Audrey', 'Matthew'],
+    'latestMessage': 'Jai: Just finished reviewing the formula sheet.',
+    'latestMessageTime': '9:11 AM',
+    'unreadMessages': 2,
+  },
+  {
+    'name': 'Math Scholars',
+    'subject': 'Mathematics',
+    'members': 7,
+    'mastery': 65,
+    'icon': '📐',
+    'color': Color(0xFF7E57C2),
+    'owned': false,
+    'joined': true,
+    'favorite': false,
+    'membersList': ['Jai', 'Kirs', 'Derick', 'Kester', 'Clarine', 'Audrey', 'Matthew'],
+    'latestMessage': 'Matthew: The practice set is ready.',
+    'latestMessageTime': 'Yesterday',
+    'unreadMessages': 0,
+  },
+  {
+    'name': 'Biology Buddies',
+    'subject': 'Biology',
+    'members': 7,
+    'mastery': 82,
+    'icon': '🌿',
+    'color': Color(0xFF66BB6A),
+    'owned': false,
+    'joined': true,
+    'favorite': true,
+    'membersList': ['Jai', 'Kirs', 'Derick', 'Kester', 'Clarine', 'Audrey', 'Matthew'],
+    'latestMessage': 'Kirs: Shared the review notes.',
+    'latestMessageTime': 'Mon',
+    'unreadMessages': 1,
+  },
+  {
+    'name': 'Research Circle',
+    'subject': 'Research',
+    'members': 7,
+    'mastery': 45,
+    'icon': '🔬',
+    'color': AppColors.honeyDark,
+    'owned': true,
+    'joined': false,
+    'favorite': false,
+    'membersList': ['Jai', 'Kirs', 'Derick', 'Kester', 'Clarine', 'Audrey', 'Matthew'],
+    'latestMessage': 'Clarine: Let\'s review the outline.',
+    'latestMessageTime': 'Sun',
+    'unreadMessages': 0,
+  },
+  {
+    'name': 'Chemistry Group',
+    'subject': 'Chemistry',
+    'members': 7,
+    'mastery': 70,
+    'icon': '⚗️',
+    'color': Color(0xFFEF5350),
+    'owned': false,
+    'joined': true,
+    'favorite': false,
+    'membersList': ['Jai', 'Kirs', 'Derick', 'Kester', 'Clarine', 'Audrey', 'Matthew'],
+    'latestMessage': 'Kester: Does anyone have the worksheets?',
+    'latestMessageTime': 'Sat',
+    'unreadMessages': 0,
+  },
+];
+
 class _HivesPageState extends State<HivesPage> {
   final _searchController = TextEditingController();
   String? _selectedFilter = 'All';
 
   final List<String> _filters = ['All', 'Owned', 'Joined', 'Favorites'];
-
-  final List<Map<String, dynamic>> _hives = [
-    {
-      'name': 'Physics Hive',
-      'subject': 'Physics',
-      'members': 24,
-      'mastery': 78,
-      'icon': '🧪',
-      'color': Color(0xFF42A5F5),
-    },
-    {
-      'name': 'Math Scholars',
-      'subject': 'Mathematics',
-      'members': 18,
-      'mastery': 65,
-      'icon': '📐',
-      'color': Color(0xFF7E57C2),
-    },
-    {
-      'name': 'Biology Buddies',
-      'subject': 'Biology',
-      'members': 12,
-      'mastery': 82,
-      'icon': '🌿',
-      'color': Color(0xFF66BB6A),
-    },
-    {
-      'name': 'Research Circle',
-      'subject': 'Research',
-      'members': 8,
-      'mastery': 45,
-      'icon': '🔬',
-      'color': AppColors.honeyDark,
-    },
-    {
-      'name': 'Chemistry Group',
-      'subject': 'Chemistry',
-      'members': 15,
-      'mastery': 70,
-      'icon': '⚗️',
-      'color': Color(0xFFEF5350),
-    },
-  ];
 
   @override
   void dispose() {
@@ -105,10 +140,10 @@ class _HivesPageState extends State<HivesPage> {
               ),
               child: TextField(
                 controller: _searchController,
+                onChanged: (_) => setState(() {}),
                 decoration: InputDecoration(
                   hintText: 'Search Hives...',
                   prefixIcon: Icon(Icons.search, color: AppColors.honeyDark),
-                  suffixIcon: Icon(Icons.tune, color: AppColors.honeyDark),
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(
                     horizontal: 16,
@@ -206,7 +241,54 @@ class _HivesPageState extends State<HivesPage> {
               ],
             ),
             SizedBox(height: 24),
-            ..._hives.map((hive) => _buildHiveCard(context, hive)),
+            ...studyHiveHives
+                .where((hive) {
+                  final query = _searchController.text.toLowerCase();
+                  final matchesSearch =
+                      hive['name'].toString().toLowerCase().contains(query) ||
+                      hive['subject'].toString().toLowerCase().contains(
+                        query,
+                      ) ||
+                      (hive['membersList'] as List<String>).any(
+                        (member) => member.toLowerCase().contains(query),
+                      );
+                  final matchesFilter =
+                      _selectedFilter == 'All' ||
+                      (_selectedFilter == 'Owned' && hive['owned'] == true) ||
+                      (_selectedFilter == 'Joined' &&
+                          hive['joined'] == true &&
+                          hive['owned'] != true) ||
+                      (_selectedFilter == 'Favorites' &&
+                          hive['favorite'] == true);
+                  return matchesSearch && matchesFilter;
+                })
+                .map((hive) => _buildHiveCard(context, hive)),
+            if (!studyHiveHives.any((hive) {
+              final query = _searchController.text.toLowerCase();
+              final matchesSearch =
+                  hive['name'].toString().toLowerCase().contains(query) ||
+                  hive['subject'].toString().toLowerCase().contains(query) ||
+                  (hive['membersList'] as List<String>).any(
+                    (member) => member.toLowerCase().contains(query),
+                  );
+              final matchesFilter =
+                  _selectedFilter == 'All' ||
+                  (_selectedFilter == 'Owned' && hive['owned'] == true) ||
+                  (_selectedFilter == 'Joined' &&
+                      hive['joined'] == true &&
+                      hive['owned'] != true) ||
+                  (_selectedFilter == 'Favorites' && hive['favorite'] == true);
+              return matchesSearch && matchesFilter;
+            }))
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: Center(
+                  child: Text(
+                    'No hives found',
+                    style: TextStyle(color: AppColors.textSecondary),
+                  ),
+                ),
+              ),
             SizedBox(height: 100),
           ],
         ),
@@ -221,7 +303,18 @@ class _HivesPageState extends State<HivesPage> {
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => HiveOverviewPage()),
+            MaterialPageRoute(
+              builder: (_) => HiveOverviewPage(
+                hiveId: hive['name'].toString().toLowerCase().replaceAll(
+                  ' ',
+                  '-',
+                ),
+                hiveName: hive['name'].toString(),
+                hiveSubject: hive['subject'].toString(),
+                hiveMembers: hive['members'] as int,
+                hiveIcon: hive['icon'].toString(),
+              ),
+            ),
           );
         },
         child: Container(

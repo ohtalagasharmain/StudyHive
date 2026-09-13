@@ -50,11 +50,11 @@ class _LoginPageState extends State<LoginPage> {
         backgroundColor: Colors.transparent,
         body: SafeArea(
           child: SingleChildScrollView(
-            padding: EdgeInsets.all(24),
+            padding: EdgeInsets.all(14),
             child: Column(
               children: [
                 SizedBox(height: 20),
-                SizedBox(height: 24),
+                SizedBox(height: 20),
                 Container(
                   decoration: BoxDecoration(
                     color: AppColors.cardWhite.withValues(alpha: 0.9),
@@ -67,7 +67,7 @@ class _LoginPageState extends State<LoginPage> {
                         child: GestureDetector(
                           onTap: () => setState(() => _selectedTab = 0),
                           child: Container(
-                            padding: EdgeInsets.symmetric(vertical: 14),
+                            padding: EdgeInsets.symmetric(vertical: 5),
                             decoration: BoxDecoration(
                               color: _selectedTab == 0
                                   ? AppColors.honeyYellow.withValues(alpha: 0.5)
@@ -100,7 +100,7 @@ class _LoginPageState extends State<LoginPage> {
                             );
                           },
                           child: Container(
-                            padding: EdgeInsets.symmetric(vertical: 14),
+                            padding: EdgeInsets.symmetric(vertical: 5),
                             decoration: BoxDecoration(
                               color: _selectedTab == 1
                                   ? AppColors.honeyYellow.withValues(alpha: 0.5)
@@ -129,7 +129,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 SizedBox(height: 24),
                 Container(
-                  padding: EdgeInsets.all(28),
+                  padding: EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: AppColors.cardWhite,
                     borderRadius: BorderRadius.circular(28),
@@ -166,7 +166,7 @@ class _LoginPageState extends State<LoginPage> {
                             ],
                           ),
                         ),
-                        SizedBox(height: 28),
+                        SizedBox(height: 20),
                         CustomTextField(
                           label: 'Email',
                           controller: _emailController,
@@ -224,7 +224,7 @@ class _LoginPageState extends State<LoginPage> {
                           isLoading: _isLoading,
                           onPressed: _handleLogin,
                         ),
-                        SizedBox(height: 24),
+                        SizedBox(height: 20),
                         Row(
                           children: [
                             Expanded(

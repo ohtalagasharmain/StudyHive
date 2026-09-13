@@ -13,10 +13,10 @@ class StudentOnboardingPage extends StatefulWidget {
 
 class _StudentOnboardingPageState extends State<StudentOnboardingPage> {
   final _nameController = TextEditingController(text: 'Studyhive');
-  final _schoolController = TextEditingController(text: 'National University - East Ortigas');
+  final _schoolController = TextEditingController(text: 'NU East Ortigas');
   String? _selectedGrade = 'Freshman';
   String? _selectedStrand = 'BSCS';
-  final List<String> _selectedSubjects = ['Mathematics', 'Science', 'English'];
+  final List<String> _selectedSubjects = ['Fundamentals of Programming'];
   final int _currentStep = 0;
 
   final List<String> _grades = ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12', 'College'];

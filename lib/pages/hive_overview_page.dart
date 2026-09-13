@@ -7,11 +7,25 @@ import '../widgets/honeycomb_background.dart';
 import '../widgets/reusable_widgets.dart';
 import 'hive_members_page.dart';
 import 'chat_page.dart';
-import 'quiz_selection_page.dart';
+import 'chat_details_page.dart';
+import 'create_quiz_page.dart';
 import 'study_materials_page.dart';
 
 class HiveOverviewPage extends StatefulWidget {
-  const HiveOverviewPage({super.key});
+  final String hiveId;
+  final String hiveName;
+  final String hiveSubject;
+  final int hiveMembers;
+  final String hiveIcon;
+
+  const HiveOverviewPage({
+    super.key,
+    this.hiveId = 'physics-hive',
+    this.hiveName = 'Physics Hive',
+    this.hiveSubject = 'Physics',
+    this.hiveMembers = 24,
+    this.hiveIcon = '🧪',
+  });
 
   @override
   State<HiveOverviewPage> createState() => _HiveOverviewPageState();
@@ -51,15 +65,24 @@ class _HiveOverviewPageState extends State<HiveOverviewPage>
           child: Column(
             children: [
               _buildHeader(context),
-              if (_tabController.index != 0) _buildHiveInfo(context),
               Expanded(
                 child: TabBarView(
                   controller: _tabController,
                   children: [
                     _buildOverviewTab(),
-                    StudyMaterialsPage(embedded: true),
+                    StudyMaterialsPage(
+                      embedded: true,
+                      hiveId: widget.hiveId,
+                      hiveName: widget.hiveName,
+                    ),
                     _buildQuizTab(),
-                    ChatPage(embedded: true),
+                    ChatPage(
+                      showAppBar: false,
+                      showBottomNavigationBar: false,
+                      hiveId: widget.hiveId,
+                      hiveName: widget.hiveName,
+                      memberSummary: '7 members',
+                    ),
                   ],
                 ),
               ),
@@ -71,7 +94,23 @@ class _HiveOverviewPageState extends State<HiveOverviewPage>
           children: [
             NavigationBar(
               selectedIndex: _tabController.index,
-              onDestinationSelected: (index) => _tabController.animateTo(index),
+              onDestinationSelected: (index) {
+                if (index == 3) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ChatDetailsPage(
+                        hiveId: widget.hiveId,
+                        hiveName: widget.hiveName,
+                        memberSummary: '7 members',
+                        showChat: true,
+                      ),
+                    ),
+                  );
+                } else {
+                  _tabController.animateTo(index);
+                }
+              },
               backgroundColor: AppColors.cardWhite,
               indicatorColor: AppColors.honeyYellow.withValues(alpha: 0.45),
               height: 72,
@@ -105,116 +144,65 @@ class _HiveOverviewPageState extends State<HiveOverviewPage>
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.all(20),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: Icon(Icons.arrow_back, color: AppColors.honeyDark),
-          ),
-          Spacer(),
-          if (_tabController.index == 1 || _tabController.index == 2)
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          children: [
             IconButton(
-              onPressed: () {},
-              tooltip: 'Focus Session',
-              icon: Icon(Icons.timer, color: AppColors.purpleAccent),
+              onPressed: () => Navigator.pop(context),
+              icon: Icon(Icons.arrow_back, color: AppColors.honeyDark),
             ),
-          IconButton(
-            onPressed: () {},
-            icon: Icon(Icons.notifications_none, color: AppColors.honeyDark),
-          ),
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => HiveMembersPage()),
-              );
-            },
-            icon: Icon(Icons.group, color: AppColors.honeyDark),
-          ),
-          IconButton(
-            onPressed: () {},
-            icon: Icon(Icons.more_vert, color: AppColors.honeyDark),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHiveInfo(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: [
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              color: Color(0xFF42A5F5).withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(18),
+            Container(
+              width: 38,
+              height: 38,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Color(0xFF42A5F5).withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: Text(widget.hiveIcon, style: TextStyle(fontSize: 20)),
             ),
-            child: Center(child: Text('🧪', style: TextStyle(fontSize: 32))),
-          ),
-          SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Physics Hive',
-                  style:
-                      Theme.of(context).textTheme.displaySmall?.copyWith(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.bold,
-                      ) ??
-                      Theme.of(context).textTheme.headlineMedium,
-                ),
-                SizedBox(height: 4),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.people,
-                      size: 15,
+            SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.hiveName,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  Text(
+                    '7 members',
+                    style: TextStyle(
+                      fontSize: 11,
                       color: AppColors.textSecondary,
                     ),
-                    SizedBox(width: 4),
-                    Text(
-                      '5 Members',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 13,
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    Icon(
-                      Icons.science,
-                      size: 15,
-                      color: AppColors.textSecondary,
-                    ),
-                    SizedBox(width: 4),
-                    Text(
-                      'Physics',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            if (_tabController.index == 1 || _tabController.index == 2)
+              IconButton(
+                onPressed: () {},
+                tooltip: 'Focus Session',
+                icon: Icon(Icons.timer, color: AppColors.purpleAccent),
+              ),
+            IconButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => HiveMembersPage()),
+                );
+              },
+              icon: Icon(Icons.people_outline, color: AppColors.honeyDark),
+              tooltip: 'Chat details',
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -374,7 +362,7 @@ class _HiveOverviewPageState extends State<HiveOverviewPage>
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => QuizSelectionPage()),
+                  MaterialPageRoute(builder: (_) => const CreateQuizPage()),
                 );
               },
               style: ElevatedButton.styleFrom(
@@ -405,8 +393,7 @@ class _HiveOverviewPageState extends State<HiveOverviewPage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHiveInfo(context),
-          SizedBox(height: 20),
+          SizedBox(height: 10),
           _buildMasteryCard(),
           SizedBox(height: 20),
           _buildMissionCard(context),
@@ -475,11 +462,18 @@ class _HiveOverviewPageState extends State<HiveOverviewPage>
               Icons.upload_file,
             ),
             _buildActivityTile(
-              'Kirsten',
+              'Kirs',
               'joined the Physics Hive',
               '1d ago',
               AppColors.purpleAccent,
               Icons.person_add,
+            ),
+            _buildActivityTile(
+              'Matthew',
+              'started a new quiz',
+              '3d ago',
+              Color(0xFF7E57C2),
+              Icons.quiz,
             ),
           ],
           SizedBox(height: 80),
@@ -496,8 +490,8 @@ class _HiveOverviewPageState extends State<HiveOverviewPage>
     Widget miniGraphic,
   ) {
     return Container(
-      height: 142,
-      padding: EdgeInsets.all(9),
+      height: 130,
+      padding: EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(14),
@@ -509,6 +503,7 @@ class _HiveOverviewPageState extends State<HiveOverviewPage>
           ),
         ],
       ),
+      clipBehavior: Clip.hardEdge,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -519,7 +514,7 @@ class _HiveOverviewPageState extends State<HiveOverviewPage>
               color: color.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: color, size: 17),
+            child: Icon(icon, color: color, size: 20),
           ),
           Text(
             value,
@@ -539,8 +534,8 @@ class _HiveOverviewPageState extends State<HiveOverviewPage>
               fontWeight: FontWeight.w600,
             ),
           ),
-          SizedBox(height: 4),
-          SizedBox(height: 24, child: miniGraphic),
+          SizedBox(height: 5),
+          SizedBox(height: 20, child: miniGraphic),
         ],
       ),
     );
@@ -670,7 +665,7 @@ class _HiveOverviewPageState extends State<HiveOverviewPage>
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => QuizSelectionPage()),
+                MaterialPageRoute(builder: (_) => const CreateQuizPage()),
               );
             },
           ),

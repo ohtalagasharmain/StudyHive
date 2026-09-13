@@ -15,7 +15,6 @@ class _FlashcardsPageState extends State<FlashcardsPage>
   late AnimationController _flipController;
   late Animation<double> _flipAnimation;
   int _currentIndex = 0;
-  bool _isFlipped = false;
   bool _shuffled = false;
   final Set<int> _known = {};
   final Set<int> _review = {};
@@ -81,13 +80,6 @@ class _FlashcardsPageState extends State<FlashcardsPage>
     _flipAnimation = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(parent: _flipController, curve: Curves.easeInOut),
     );
-    _flipController.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        setState(() => _isFlipped = true);
-      } else if (status == AnimationStatus.dismissed) {
-        setState(() => _isFlipped = false);
-      }
-    });
   }
 
   @override
@@ -108,7 +100,6 @@ class _FlashcardsPageState extends State<FlashcardsPage>
   void _goTo(int index) {
     setState(() {
       _currentIndex = index;
-      _isFlipped = false;
     });
     _flipController.value = 0;
   }
@@ -125,7 +116,6 @@ class _FlashcardsPageState extends State<FlashcardsPage>
     setState(() {
       _cards.shuffle();
       _currentIndex = 0;
-      _isFlipped = false;
       _shuffled = true;
     });
     _flipController.value = 0;

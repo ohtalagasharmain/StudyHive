@@ -4,11 +4,18 @@ import '../theme/app_theme.dart';
 import '../widgets/honeycomb_background.dart';
 import '../widgets/reusable_widgets.dart';
 import 'ai_generator_page.dart';
-import 'ai_summary_page.dart';
 
 class StudyMaterialsPage extends StatefulWidget {
   final bool embedded;
-  const StudyMaterialsPage({super.key, this.embedded = false});
+  final String hiveId;
+  final String hiveName;
+
+  const StudyMaterialsPage({
+    super.key,
+    this.embedded = false,
+    this.hiveId = 'physics-hive',
+    this.hiveName = 'Physics Hive',
+  });
 
   @override
   State<StudyMaterialsPage> createState() => _StudyMaterialsPageState();
@@ -75,7 +82,7 @@ class _StudyMaterialsPageState extends State<StudyMaterialsPage>
         children: [
           if (!widget.embedded)
             Padding(
-              padding: EdgeInsets.all(20),
+              padding: EdgeInsets.all(5),
               child: Row(
                 children: [
                   IconButton(
@@ -191,7 +198,7 @@ class _StudyMaterialsPageState extends State<StudyMaterialsPage>
               borderRadius: BorderRadius.circular(16),
             ),
           ),
-          SizedBox(height: 10),
+          SizedBox(height: 15),
           FloatingActionButton.extended(
             heroTag: 'upload',
             onPressed: () => _showUploadSheet(),
@@ -216,7 +223,7 @@ class _StudyMaterialsPageState extends State<StudyMaterialsPage>
 
   Widget _buildMaterialsList() {
     return SingleChildScrollView(
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -242,7 +249,7 @@ class _StudyMaterialsPageState extends State<StudyMaterialsPage>
 
   Widget _buildMaterialCard(Map<String, dynamic> m) {
     return Container(
-      padding: EdgeInsets.all(14),
+      padding: EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: AppColors.cardWhite,
         borderRadius: BorderRadius.circular(18),
@@ -281,6 +288,8 @@ class _StudyMaterialsPageState extends State<StudyMaterialsPage>
                     fontSize: 14,
                     color: AppColors.textPrimary,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 SizedBox(height: 4),
                 Row(
@@ -307,11 +316,15 @@ class _StudyMaterialsPageState extends State<StudyMaterialsPage>
                       color: AppColors.textSecondary,
                     ),
                     SizedBox(width: 3),
-                    Text(
-                      m['date'],
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 11,
+                    Flexible(
+                      child: Text(
+                        m['date'],
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 11,
+                        ),
                       ),
                     ),
                   ],
@@ -319,38 +332,18 @@ class _StudyMaterialsPageState extends State<StudyMaterialsPage>
               ],
             ),
           ),
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => AISummaryPage()),
-              );
-            },
-            icon: Icon(
-              Icons.visibility,
-              color: AppColors.successGreen,
-              size: 20,
-            ),
-          ),
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => AIGeneratorPage()),
-              );
-            },
-            icon: Icon(
-              Icons.auto_awesome,
-              color: AppColors.purpleAccent,
-              size: 20,
-            ),
-          ),
-          IconButton(
-            onPressed: () {},
-            icon: Icon(
-              Icons.delete_outline,
-              color: AppColors.errorRed,
-              size: 20,
+          SizedBox(
+            width: 32,
+            height: 32,
+            child: IconButton(
+              onPressed: () {},
+              padding: EdgeInsets.zero,
+              constraints: BoxConstraints.tightFor(width: 32, height: 32),
+              icon: Icon(
+                Icons.delete_outline_rounded,
+                color: AppColors.errorRed,
+                size: 20,
+              ),
             ),
           ),
         ],
@@ -390,7 +383,7 @@ class _StudyMaterialsPageState extends State<StudyMaterialsPage>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Physics Reference - Khan Academy',
+                            'Physics Reference Guide',
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: 13,
@@ -398,7 +391,7 @@ class _StudyMaterialsPageState extends State<StudyMaterialsPage>
                           ),
                           SizedBox(height: 4),
                           Text(
-                            'khanacademy.org/science/physics',
+                            'academy.org/science/physics',
                             style: TextStyle(
                               color: AppColors.textSecondary,
                               fontSize: 11,

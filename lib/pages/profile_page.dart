@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 import '../widgets/honeycomb_background.dart';
+import 'help_assistant_page.dart';
+import 'study_feature_page.dart';
+import 'edit_profile_page.dart';
 
 class ProfilePage extends StatefulWidget {
   final bool isProSubscriber;
@@ -22,10 +25,11 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  String _name = 'Study Hive';
-  String _username = 'studyhive';
-  String _bio = 'Focused on learning, one session at a time.';
-  bool _isRestoring = false;
+  final String _name = 'Study Hive';
+  final String _username = 'studyhive';
+  final String _bio = 'Focused on learning, one session at a time.';
+  final String _grade = 'Grade 11';
+  final String _subjects = 'Physics, Mathematics';
 
   @override
   Widget build(BuildContext context) {
@@ -41,11 +45,9 @@ class _ProfilePageState extends State<ProfilePage> {
               SizedBox(height: 18),
               _buildProCard(context),
               SizedBox(height: 24),
-              _sectionTitle('Your Progress'),
+              _sectionTitle('Honeycomb'),
               SizedBox(height: 10),
-              _buildLevelCard(),
-              SizedBox(height: 12),
-              _buildStatsGrid(),
+              _buildHoneycombCard(),
               SizedBox(height: 24),
               _sectionTitle('Profile Menu'),
               SizedBox(height: 10),
@@ -63,6 +65,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildProfileHeader(BuildContext context) {
     return _card(
+      color: AppColors.cardWhite,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -118,14 +121,21 @@ class _ProfilePageState extends State<ProfilePage> {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: AppColors.textSecondary,
+                    color: AppColors.textPrimary,
                     fontSize: 12,
                     height: 1.35,
                   ),
                 ),
+                SizedBox(height: 5),
+                Text(
+                  '$_grade • $_subjects',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: AppColors.textPrimary, fontSize: 11),
+                ),
                 SizedBox(height: 12),
                 OutlinedButton.icon(
-                  onPressed: () => _showEditProfileSheet(context),
+                  onPressed: () => _openEditProfilePage(context),
                   icon: Icon(Icons.edit_outlined, size: 16),
                   label: Text('Edit Profile'),
                   style: OutlinedButton.styleFrom(
@@ -181,7 +191,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
             TextButton(
-              onPressed: () {},
+              onPressed: () => _openGuide('Manage Subscription'),
               style: TextButton.styleFrom(
                 foregroundColor: AppColors.purpleAccent,
                 backgroundColor: Colors.white,
@@ -283,89 +293,112 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildLevelCard() {
+  Widget _buildHoneycombCard() {
     return _card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.auto_awesome, color: AppColors.honeyDark, size: 20),
-              SizedBox(width: 8),
+              Container(
+                padding: EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.honeyYellow.withValues(alpha: 0.3),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.hexagon, color: AppColors.honeyDark),
+              ),
+              SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Level 8 • Focused Learner',
+                  '12 Honeycombs',
                   style: TextStyle(
-                    fontWeight: FontWeight.bold,
                     color: AppColors.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
-              SizedBox(width: 8),
               Text(
-                '700 / 1000 XP',
+                '5 Day Streak',
                 style: TextStyle(
-                  color: AppColors.honeyDark,
+                  color: AppColors.accentOrange,
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
                 ),
               ),
             ],
           ),
-          SizedBox(height: 12),
+          SizedBox(height: 14),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Level 2', style: _menuText()),
+              Text(
+                '12/20 Honeycombs to next level',
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
+              ),
+            ],
+          ),
+          SizedBox(height: 8),
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
             child: LinearProgressIndicator(
-              value: 0.7,
+              value: 0.6,
               minHeight: 9,
               backgroundColor: AppColors.progressBg,
               valueColor: AlwaysStoppedAnimation<Color>(AppColors.honeyDark),
             ),
           ),
-          SizedBox(height: 7),
-          Text(
-            '300 XP to Level 9',
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 11),
+          SizedBox(height: 16),
+          _honeycombEarningRow(
+            icon: Icons.login,
+            title: 'Daily Login',
+            detail: 'Opened today',
+            trailing: '+1 Honeycomb claimed',
+          ),
+          _honeycombEarningRow(
+            icon: Icons.menu_book_outlined,
+            title: 'Study Activities',
+            detail: '2 of 3 tasks completed today',
+            trailing: '+2 available',
+          ),
+          _honeycombEarningRow(
+            icon: Icons.ondemand_video_outlined,
+            title: 'Watch Ads',
+            detail: 'Support your next level',
+            trailing: 'Watch Ad (+1)',
+            onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Ad reward is ready in the mock UI.')),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStatsGrid() {
-    final stats = [
-      ('Total Study Time', '42h', Icons.schedule, AppColors.honeyDark),
-      ('Sessions Completed', '28', Icons.task_alt, AppColors.successGreen),
-      ('Active Subjects', '6', Icons.menu_book, Color(0xFF42A5F5)),
-      ('Achievements', '12', Icons.emoji_events, AppColors.accentOrange),
-      (
-        'Current Streak',
-        '8 days',
-        Icons.local_fire_department,
-        AppColors.errorRed,
-      ),
-      ('Longest Streak', '21 days', Icons.bolt, AppColors.purpleAccent),
-    ];
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: NeverScrollableScrollPhysics(),
-      itemCount: stats.length,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-        childAspectRatio: 1.55,
-      ),
-      itemBuilder: (context, index) {
-        final stat = stats[index];
-        return _PressableStatCard(
-          label: stat.$1,
-          value: stat.$2,
-          icon: stat.$3,
-          color: stat.$4,
-          onPress: () => widget.onPressStat?.call(stat.$1),
-        );
-      },
+  Widget _honeycombEarningRow({
+    required IconData icon,
+    required String title,
+    required String detail,
+    required String trailing,
+    VoidCallback? onTap,
+  }) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(icon, color: AppColors.honeyDark),
+      title: Text(title, style: _menuText()),
+      subtitle: Text(detail),
+      trailing: onTap == null
+          ? Text(
+              trailing,
+              style: TextStyle(
+                color: AppColors.successGreen,
+                fontWeight: FontWeight.bold,
+                fontSize: 11,
+              ),
+            )
+          : TextButton(onPressed: onTap, child: Text(trailing)),
     );
   }
 
@@ -379,7 +412,7 @@ class _ProfilePageState extends State<ProfilePage> {
       ('App Preferences', Icons.settings_outlined, null),
     ];
     return _card(
-      padding: EdgeInsets.symmetric(vertical: 4),
+      padding: EdgeInsets.symmetric(vertical: 8),
       child: Column(
         children: items
             .asMap()
@@ -401,7 +434,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return Column(
       children: [
         ListTile(
-          onTap: () {},
+          onTap: () => _openGuide(label),
           leading: Icon(icon, color: AppColors.honeyDark),
           title: Text(
             label,
@@ -447,6 +480,42 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  void _openGuide(String topic) {
+    if (topic == 'My Profile') {
+      _openEditProfilePage(context);
+      return;
+    }
+    final feature = switch (topic) {
+      'Study Insights' => StudyFeature.insights,
+      'Saved Resources' => StudyFeature.resources,
+      'Study Groups' => StudyFeature.groups,
+      'Achievements' => StudyFeature.achievements,
+      'App Preferences' => StudyFeature.preferences,
+      'Manage Subscription' => StudyFeature.subscription,
+      _ => null,
+    };
+    if (feature != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => StudyFeaturePage(feature: feature)),
+      );
+      return;
+    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => HelpAssistantPage(initialQuestion: topic),
+      ),
+    );
+  }
+
+  void _openEditProfilePage(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const EditProfilePage()),
+    );
+  }
+
   Widget _buildAccountCard(BuildContext context) {
     return _card(
       padding: EdgeInsets.symmetric(vertical: 4),
@@ -459,27 +528,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             title: Text('Manage Subscription', style: _menuText()),
             trailing: Icon(Icons.chevron_right, color: AppColors.textSecondary),
-            onTap: () {},
-          ),
-          Divider(
-            height: 1,
-            indent: 58,
-            endIndent: 14,
-            color: AppColors.honeyCombLine.withValues(alpha: 0.45),
-          ),
-          ListTile(
-            leading: _isRestoring
-                ? SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppColors.honeyDark,
-                    ),
-                  )
-                : Icon(Icons.restore, color: AppColors.honeyDark),
-            title: Text('Restore Purchases', style: _menuText()),
-            onTap: _isRestoring ? null : _restorePurchases,
+            onTap: () => _openGuide('Manage Subscription'),
           ),
           Divider(
             height: 1,
@@ -539,7 +588,11 @@ class _ProfilePageState extends State<ProfilePage> {
         border: borderColor == null ? null : Border.all(color: borderColor),
         boxShadow: [_shadow()],
       ),
-      child: child,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        child: child,
+      ),
     );
   }
 
@@ -548,12 +601,6 @@ class _ProfilePageState extends State<ProfilePage> {
     blurRadius: 14,
     offset: Offset(0, 5),
   );
-
-  Future<void> _restorePurchases() async {
-    setState(() => _isRestoring = true);
-    await Future<void>.delayed(Duration(milliseconds: 900));
-    if (mounted) setState(() => _isRestoring = false);
-  }
 
   void _showAvatarSheet(BuildContext context) {
     showModalBottomSheet(
@@ -593,83 +640,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  void _showEditProfileSheet(BuildContext context) {
-    final nameController = TextEditingController(text: _name);
-    final usernameController = TextEditingController(text: _username);
-    final bioController = TextEditingController(text: _bio);
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (sheetContext) => Padding(
-        padding: EdgeInsets.fromLTRB(
-          20,
-          4,
-          20,
-          MediaQuery.of(sheetContext).viewInsets.bottom + 20,
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Edit Profile',
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-              SizedBox(height: 16),
-              _editField('Display name', nameController),
-              _editField('Username', usernameController, prefix: '@'),
-              _editField('Bio', bioController, maxLines: 2),
-              SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _name = nameController.text.trim().isEmpty
-                          ? _name
-                          : nameController.text.trim();
-                      _username =
-                          usernameController.text
-                              .trim()
-                              .replaceFirst('@', '')
-                              .isEmpty
-                          ? _username
-                          : usernameController.text.trim().replaceFirst(
-                              '@',
-                              '',
-                            );
-                      _bio = bioController.text.trim().isEmpty
-                          ? _bio
-                          : bioController.text.trim();
-                    });
-                    Navigator.pop(sheetContext);
-                  },
-                  child: Text('Save Changes'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _editField(
-    String label,
-    TextEditingController controller, {
-    String? prefix,
-    int maxLines = 1,
-  }) => Padding(
-    padding: EdgeInsets.only(bottom: 12),
-    child: TextField(
-      controller: controller,
-      maxLines: maxLines,
-      decoration: InputDecoration(labelText: label, prefixText: prefix),
-    ),
-  );
-
   void _showSignOutDialog(BuildContext context) {
     showDialog<void>(
       context: context,
@@ -689,97 +659,6 @@ class _ProfilePageState extends State<ProfilePage> {
             child: Text('Sign Out'),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _PressableStatCard extends StatefulWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
-  final VoidCallback onPress;
-
-  const _PressableStatCard({
-    required this.label,
-    required this.value,
-    required this.icon,
-    required this.color,
-    required this.onPress,
-  });
-
-  @override
-  State<_PressableStatCard> createState() => _PressableStatCardState();
-}
-
-class _PressableStatCardState extends State<_PressableStatCard> {
-  bool _pressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: widget.onPress,
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapCancel: () => setState(() => _pressed = false),
-      onTapUp: (_) => setState(() => _pressed = false),
-      child: AnimatedScale(
-        scale: _pressed ? 0.97 : 1,
-        duration: Duration(milliseconds: 100),
-        child: Container(
-          padding: EdgeInsets.all(13),
-          decoration: BoxDecoration(
-            color: AppColors.cardWhite,
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 10,
-                offset: Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: widget.color.withValues(alpha: 0.13),
-                  borderRadius: BorderRadius.circular(11),
-                ),
-                child: Icon(widget.icon, color: widget.color, size: 19),
-              ),
-              SizedBox(width: 9),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      widget.value,
-                      style: TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 3),
-                    Text(
-                      widget.label,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 10,
-                        height: 1.2,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

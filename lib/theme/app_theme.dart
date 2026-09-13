@@ -13,7 +13,7 @@ class AppColors {
   static const Color errorRed = Color(0xFFEF5350);
   static const Color cardWhite = Color(0xFFFFFFFF);
   static const Color progressBg = Color(0xFFFFECB3);
-  static const Color inputBg = Color(0xFFE1F5FE);
+  static const Color inputBg = Color(0xFFFFFFFF);
   static const Color purpleAccent = Color(0xFF7E57C2);
 }
 

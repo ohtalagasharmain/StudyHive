@@ -31,7 +31,7 @@ class _QuizResultsPageState extends State<QuizResultsPage> with SingleTickerProv
   late AnimationController _scoreController;
   late Animation<double> _scoreAnimation;
 
-  int get _score => (widget.correct / widget.total * 10).round();
+  int get score => (widget.correct / widget.total * 10).round();
   double get _accuracy => widget.correct / widget.total * 100;
   int get _masteryGain {
     if (_accuracy >= 90) return 22;

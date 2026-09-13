@@ -17,7 +17,7 @@ class _CreateHivePageState extends State<CreateHivePage> {
   final _descController = TextEditingController();
   final _customSubjectController = TextEditingController();
   String? _selectedSubject = 'Physics';
-  String _privacy = 'Private (Only invite)';
+  String _privacy = 'Private';
   bool _isCreating = false;
   bool _showSuccess = false;
   String _generatedCode = '';
@@ -32,7 +32,7 @@ class _CreateHivePageState extends State<CreateHivePage> {
     'Social Studies',
     'History',
     'Research',
-     'Custom',
+    'Custom',
   ];
 
   @override
@@ -187,14 +187,10 @@ class _CreateHivePageState extends State<CreateHivePage> {
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   SizedBox(height: 12),
-                  _buildPrivacyOption('Private (Only invite)', Icons.lock),
+                  _buildPrivacyOption('Private', Icons.lock),
                   SizedBox(height: 8),
                   _buildPrivacyOption('Public (Anyone can join)', Icons.public),
                   SizedBox(height: 8),
-                  _buildPrivacyOption(
-                    'Private (Created Hive)',
-                    Icons.admin_panel_settings,
-                  ),
                   SizedBox(height: 32),
                   PrimaryButton(
                     text: 'Create Hive',

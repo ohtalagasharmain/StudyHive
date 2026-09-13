@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../theme/app_theme.dart';
 import '../widgets/honeycomb_background.dart';
 import '../widgets/reusable_widgets.dart';
@@ -12,37 +13,27 @@ class JoinHivePage extends StatefulWidget {
 }
 
 class _JoinHivePageState extends State<JoinHivePage> {
-  final List<TextEditingController> _controllers = List.generate(6, (_) => TextEditingController());
-  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
+  final _codeController = TextEditingController();
   bool _showPreview = false;
   bool _isJoining = false;
 
-  String get _code => _controllers.map((c) => c.text).join();
+  String get _code => _codeController.text;
 
   @override
   void dispose() {
-    for (var c in _controllers) {
-      c.dispose();
-    }
-    for (var f in _focusNodes) {
-      f.dispose();
-    }
+    _codeController.dispose();
     super.dispose();
   }
 
-  void _onDigitChanged(int index, String value) {
-    if (value.length == 1 && index < 5) {
-      _focusNodes[index + 1].requestFocus();
-    }
-    setState(() {
-      _showPreview = _code.length == 6;
-    });
+  void _onCodeChanged(String value) {
+    setState(() => _showPreview = value.length == 6);
   }
 
   void _handleJoin() {
     if (_code.length == 6) {
       setState(() => _isJoining = true);
       Future.delayed(Duration(seconds: 1), () {
+        if (!mounted) return;
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => HiveOverviewPage()),
@@ -84,7 +75,11 @@ class _JoinHivePageState extends State<JoinHivePage> {
                       color: AppColors.purpleAccent.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.group_add, color: AppColors.purpleAccent, size: 48),
+                    child: Icon(
+                      Icons.group_add,
+                      color: AppColors.purpleAccent,
+                      size: 48,
+                    ),
                   ),
                 ),
                 SizedBox(height: 20),
@@ -102,40 +97,30 @@ class _JoinHivePageState extends State<JoinHivePage> {
                   ),
                 ),
                 SizedBox(height: 32),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: List.generate(6, (index) {
-                    return SizedBox(
-                      width: 48,
-                      child: TextField(
-                        controller: _controllers[index],
-                        focusNode: _focusNodes[index],
-                        textAlign: TextAlign.center,
-                        maxLength: 1,
-                        keyboardType: TextInputType.number,
-                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.honeyDark),
-                        decoration: InputDecoration(
-                          counterText: '',
-                          filled: true,
-                          fillColor: AppColors.inputBg,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(color: AppColors.honeyYellow, width: 2),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(color: AppColors.honeyYellow, width: 2),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(color: AppColors.honeyDark, width: 2.5),
-                          ),
-                          contentPadding: EdgeInsets.symmetric(vertical: 16),
-                        ),
-                        onChanged: (v) => _onDigitChanged(index, v),
+                TextField(
+                  controller: _codeController,
+                  textAlign: TextAlign.center,
+                  maxLength: 6,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.honeyDark,
+                  ),
+                  decoration: InputDecoration(
+                    counterText: '6 digits',
+                    hintText: '123456',
+                    filled: true,
+                    fillColor: AppColors.inputBg,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(
+                        color: AppColors.honeyYellow,
+                        width: 2,
                       ),
-                    );
-                  }),
+                    ),
+                  ),
+                  onChanged: _onCodeChanged,
                 ),
                 SizedBox(height: 32),
                 if (_showPreview) _buildPreviewCard(),
@@ -175,7 +160,10 @@ class _JoinHivePageState extends State<JoinHivePage> {
             offset: Offset(0, 6),
           ),
         ],
-        border: Border.all(color: AppColors.purpleAccent.withValues(alpha: 0.3), width: 2),
+        border: Border.all(
+          color: AppColors.purpleAccent.withValues(alpha: 0.3),
+          width: 2,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -198,7 +186,9 @@ class _JoinHivePageState extends State<JoinHivePage> {
                   color: Color(0xFF42A5F5).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Center(child: Text('🧪', style: TextStyle(fontSize: 26))),
+                child: Center(
+                  child: Text('🧪', style: TextStyle(fontSize: 26)),
+                ),
               ),
               SizedBox(width: 14),
               Expanded(
@@ -212,13 +202,33 @@ class _JoinHivePageState extends State<JoinHivePage> {
                     SizedBox(height: 4),
                     Row(
                       children: [
-                        Icon(Icons.people, size: 14, color: AppColors.textSecondary),
+                        Icon(
+                          Icons.people,
+                          size: 14,
+                          color: AppColors.textSecondary,
+                        ),
                         SizedBox(width: 4),
-                        Text('24 members', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                        Text(
+                          '24 members',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
                         SizedBox(width: 16),
-                        Icon(Icons.person, size: 14, color: AppColors.textSecondary),
+                        Icon(
+                          Icons.person,
+                          size: 14,
+                          color: AppColors.textSecondary,
+                        ),
                         SizedBox(width: 4),
-                        Text('Created by Claire', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                        Text(
+                          'Created by Claire',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -241,7 +251,14 @@ class _JoinHivePageState extends State<JoinHivePage> {
                   color: AppColors.creamBackground,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Text('Newton\'s Laws', style: TextStyle(fontSize: 11, color: AppColors.honeyDark, fontWeight: FontWeight.w600)),
+                child: Text(
+                  'Newton\'s Laws',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: AppColors.honeyDark,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -249,7 +266,14 @@ class _JoinHivePageState extends State<JoinHivePage> {
                   color: AppColors.creamBackground,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Text('Kinematics', style: TextStyle(fontSize: 11, color: AppColors.honeyDark, fontWeight: FontWeight.w600)),
+                child: Text(
+                  'Kinematics',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: AppColors.honeyDark,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ],
           ),

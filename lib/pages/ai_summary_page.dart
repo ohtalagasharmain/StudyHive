@@ -72,7 +72,7 @@ class _AISummaryPageState extends State<AISummaryPage> {
                             ),
                             SizedBox(height: 12),
                             Text(
-                              "These laws were first compiled by Sir Isaac Newton in his 1687 work 'Philosophiæ Naturalis Principia Mathematica' and are applied everyday in engineering, physics problems, and understanding how the physical world works.",
+                              "These laws were first compiled by Sir Isaac Newton in his 1687 work 'Philosophiae Naturalis Principia Mathematica' and are applied everyday in engineering, physics problems, and understanding how the physical world works.",
                               style: TextStyle(color: AppColors.textPrimary, height: 1.7, fontSize: 14),
                             ),
                           ],

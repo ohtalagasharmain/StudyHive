@@ -456,7 +456,7 @@ class _AIGeneratorPageState extends State<AIGeneratorPage> {
               SizedBox(width: 10),
               Expanded(
                 child: PrimaryButton(
-                  text: 'Explain More',
+                  text: 'Explain',
                   icon: Icons.unfold_more,
                   fullWidth: true,
                   backgroundColor: AppColors.purpleAccent,
