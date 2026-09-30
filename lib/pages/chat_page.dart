@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:io';
 
 import '../theme/app_theme.dart';
 import '../widgets/honeycomb_background.dart';
@@ -6,6 +8,8 @@ import 'chat_details_page.dart';
 import 'hive_overview_page.dart';
 import 'quiz_selection_page.dart';
 import 'study_materials_page.dart';
+import 'pdf_viewer_page.dart';
+import '../services/app_state.dart';
 
 class ChatPage extends StatefulWidget {
   final bool showAppBar;
@@ -30,45 +34,7 @@ class ChatPage extends StatefulWidget {
 class _ChatPageState extends State<ChatPage> {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
-  final _messages = <_MessengerMessage>[
-    const _MessengerMessage(
-      sender: 'Jai',
-      initial: 'J',
-      text: 'Hello, everyone!.',
-      time: '9:05 AM',
-    ),
-    const _MessengerMessage(
-      sender: 'You',
-      initial: 'Y',
-      text: 'hello, Jai! I will upload the PPT later.',
-      time: '9:08 AM',
-      isOutgoing: true,
-    ),
-    const _MessengerMessage(
-      sender: 'Kirs',
-      initial: 'K',
-      text: 'Thanks, Kirs!',
-      time: '9:11 AM',
-    ),
-    const _MessengerMessage(
-      sender: 'Derick',
-      initial: 'D',
-      text: 'I\'ll check the schedule.',
-      time: '9:15 AM',
-    ),
-    const _MessengerMessage(
-      sender: 'Kester',
-      initial: 'K',
-      text: 'Ready for the session.',
-      time: '9:20 AM',
-    ),
-    const _MessengerMessage(
-      sender: 'Clarine',
-      initial: 'C',
-      text: 'See you all later!',
-      time: '9:25 AM',
-    ),
-  ];
+  bool _isAttaching = false;
 
   @override
   void dispose() {
@@ -77,58 +43,163 @@ class _ChatPageState extends State<ChatPage> {
     super.dispose();
   }
 
+  Future<void> _attachFile() async {
+    setState(() => _isAttaching = true);
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'doc', 'docx', 'png', 'jpg', 'jpeg'],
+      );
+
+      if (result != null) {
+        PlatformFile file = result.files.first;
+        
+        // Basic size limit: 10MB
+        if (file.size > 10 * 1024 * 1024) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('File size too large. Max 10MB allowed.')),
+          );
+          return;
+        }
+
+        if (!mounted) return;
+        final timeStr = TimeOfDay.now().format(context);
+
+        final newMessage = ChatMessage(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          sender: AppState().user.name,
+          text: 'Shared a file: ${file.name}',
+          time: timeStr,
+          isOutgoing: true,
+          isFile: true,
+          fileName: file.name,
+          filePath: file.path,
+        );
+
+        AppState().sendMessage(widget.hiveId, newMessage);
+        _scrollToBottom();
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error picking file: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _isAttaching = false);
+    }
+  }
+
+  void _sendMessage() {
+    final text = _messageController.text.trim();
+    if (text.isEmpty) return;
+
+    final newMessage = ChatMessage(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      sender: 'You',
+      text: text,
+      time: TimeOfDay.now().format(context),
+      isOutgoing: true,
+    );
+
+    AppState().sendMessage(widget.hiveId, newMessage);
+    _messageController.clear();
+    _scrollToBottom();
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return HoneycombBackground(
-      showGradient: false,
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        appBar: widget.showAppBar
-            ? AppBar(
-                automaticallyImplyLeading: false,
-                backgroundColor: Colors.white,
-                elevation: 0,
-                titleSpacing: 16,
-                title: InkWell(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: () => _openDetails(context),
-                  child: _ChatHeader(
-                    hiveName: widget.hiveName,
-                    memberSummary: widget.memberSummary,
+    return ListenableBuilder(
+      listenable: AppState(),
+      builder: (context, _) {
+        HiveData hive;
+        try {
+          hive = AppState().hives.firstWhere((h) => h.id == widget.hiveId);
+        } catch (_) {
+          hive = HiveData(
+            id: widget.hiveId,
+            name: widget.hiveName,
+            subject: '',
+            members: 7,
+          );
+        }
+
+        return HoneycombBackground(
+          showGradient: false,
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            appBar: widget.showAppBar
+                ? AppBar(
+                    automaticallyImplyLeading: false,
+                    backgroundColor: Colors.white,
+                    elevation: 0,
+                    titleSpacing: 16,
+                    title: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () => _openDetails(context, hive),
+                      child: _ChatHeader(
+                        hiveName: hive.name,
+                        memberSummary: '${hive.members} members',
+                        icon: hive.icon,
+                      ),
+                    ),
+                    actions: [
+                      IconButton(
+                        tooltip: 'Chat details',
+                        icon: const Icon(Icons.info_outline_rounded),
+                        onPressed: () => _openDetails(context, hive),
+                      ),
+                    ],
+                  )
+                : null,
+            body: Column(
+              children: [
+                Expanded(
+                  child: ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                    itemCount: hive.messages.length + 1,
+                    itemBuilder: (context, index) => index == 0
+                        ? const _PinnedAnnouncement()
+                        : _messageBubble(hive.messages[index - 1]),
                   ),
                 ),
-                actions: [
-                  IconButton(
-                    tooltip: 'Chat details',
-                    icon: const Icon(Icons.info_outline_rounded),
-                    onPressed: () => _openDetails(context),
-                  ),
-                ],
-              )
-            : null,
-        body: Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
-                controller: _scrollController,
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                itemCount: _messages.length + 1,
-                itemBuilder: (context, index) => index == 0
-                    ? const _PinnedAnnouncement()
-                    : _messageBubble(_messages[index - 1]),
-              ),
+                if (_isAttaching)
+                  const LinearProgressIndicator(color: AppColors.honeyDark),
+                _composer(),
+              ],
             ),
-            _composer(),
-          ],
-        ),
-        bottomNavigationBar: widget.showBottomNavigationBar
-            ? _chatNavigationBar(context)
-            : null,
+            bottomNavigationBar: widget.showBottomNavigationBar
+                ? _chatNavigationBar(context, hive)
+                : null,
+          ),
+        );
+      },
+    );
+  }
+
+  void _openDetails(BuildContext context, HiveData hive) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChatDetailsPage(hiveId: hive.id, hiveName: hive.name),
       ),
     );
   }
 
-  Widget _chatNavigationBar(BuildContext context) => NavigationBar(
+  Widget _chatNavigationBar(BuildContext context, HiveData hive) => NavigationBar(
     selectedIndex: 3,
     backgroundColor: AppColors.cardWhite,
     indicatorColor: AppColors.honeyYellow.withValues(alpha: 0.45),
@@ -137,7 +208,12 @@ class _ChatPageState extends State<ChatPage> {
       if (index == 0) {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => HiveOverviewPage()),
+          MaterialPageRoute(builder: (_) => HiveOverviewPage(
+            hiveId: hive.id,
+            hiveName: hive.name,
+            hiveSubject: hive.subject,
+            hiveIcon: hive.icon,
+          )),
         );
       } else if (index == 1) {
         Navigator.push(
@@ -175,17 +251,8 @@ class _ChatPageState extends State<ChatPage> {
     ],
   );
 
-  void _openDetails(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) =>
-            ChatDetailsPage(hiveId: widget.hiveId, hiveName: widget.hiveName),
-      ),
-    );
-  }
-
-  Widget _messageBubble(_MessengerMessage message) {
+  Widget _messageBubble(ChatMessage message) {
+    final isFile = message.isFile;
     final messageBody = Column(
       crossAxisAlignment: message.isOutgoing
           ? CrossAxisAlignment.end
@@ -193,17 +260,76 @@ class _ChatPageState extends State<ChatPage> {
       children: [
         Container(
           constraints: const BoxConstraints(maxWidth: 310),
-          padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: message.isOutgoing ? const Color(0xFFD97706) : Colors.white,
             borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 5),
+            ],
           ),
-          child: Text(
-            message.text,
-            style: TextStyle(
-              color: message.isOutgoing ? Colors.white : AppColors.textPrimary,
-            ),
-          ),
+          child: isFile
+              ? InkWell(
+                  onTap: () {
+                    if (message.filePath != null && message.filePath!.isNotEmpty) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => PdfViewerPage(
+                            title: message.fileName ?? 'Shared File',
+                            path: message.filePath!,
+                            isUrl: message.filePath!.startsWith('http'),
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _getFileIcon(message.fileName ?? ''),
+                        color: message.isOutgoing ? Colors.white : AppColors.honeyDark,
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          message.fileName ?? 'Unknown file',
+                          style: TextStyle(
+                            color: message.isOutgoing ? Colors.white : AppColors.textPrimary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.open_in_new, 
+                          size: 20, 
+                          color: message.isOutgoing ? Colors.white70 : AppColors.textSecondary),
+                        onPressed: () {
+                          if (message.filePath != null && message.filePath!.isNotEmpty) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => PdfViewerPage(
+                                  title: message.fileName ?? 'Shared File',
+                                  path: message.filePath!,
+                                  isUrl: message.filePath!.startsWith('http'),
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                )
+              : Text(
+                  message.text,
+                  style: TextStyle(
+                    color: message.isOutgoing ? Colors.white : AppColors.textPrimary,
+                  ),
+                ),
         ),
         const SizedBox(height: 4),
         Text(
@@ -243,9 +369,13 @@ class _ChatPageState extends State<ChatPage> {
                 : MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: message.isOutgoing
-                ? [messageBody]
+                ? [
+                    messageBody,
+                    const SizedBox(width: 8),
+                    _avatar(message.sender[0], true),
+                  ]
                 : [
-                    _avatar(message.initial, false),
+                    _avatar(message.sender[0], false),
                     const SizedBox(width: 8),
                     messageBody,
                   ],
@@ -255,17 +385,32 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  Widget _avatar(String initial, bool outgoing) => CircleAvatar(
-    radius: 16,
-    backgroundColor: outgoing ? const Color(0xFFD97706) : AppColors.honeyYellow,
-    child: Text(
-      initial,
-      style: TextStyle(
-        color: outgoing ? Colors.white : AppColors.textPrimary,
-        fontWeight: FontWeight.bold,
-      ),
-    ),
-  );
+  IconData _getFileIcon(String fileName) {
+    if (fileName.endsWith('.pdf')) return Icons.picture_as_pdf;
+    if (fileName.endsWith('.doc') || fileName.endsWith('.docx')) return Icons.description;
+    if (fileName.contains(RegExp(r'\.(jpg|jpeg|png)$'))) return Icons.image;
+    return Icons.insert_drive_file;
+  }
+
+  Widget _avatar(String initial, bool outgoing) {
+    final user = AppState().user;
+    return CircleAvatar(
+      radius: 16,
+      backgroundColor: outgoing ? const Color(0xFFD97706) : AppColors.honeyYellow,
+      backgroundImage: (outgoing && user.profilePicturePath != null)
+          ? FileImage(File(user.profilePicturePath!))
+          : null,
+      child: (outgoing && user.profilePicturePath != null)
+          ? null
+          : Text(
+              initial.toUpperCase(),
+              style: TextStyle(
+                color: outgoing ? Colors.white : AppColors.textPrimary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+    );
+  }
 
   Widget _composer() => Container(
     padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
@@ -281,7 +426,7 @@ class _ChatPageState extends State<ChatPage> {
         children: [
           IconButton(
             tooltip: 'Attach file',
-            onPressed: () {},
+            onPressed: _attachFile,
             icon: const Icon(Icons.attach_file),
           ),
           Expanded(
@@ -326,51 +471,30 @@ class _ChatPageState extends State<ChatPage> {
       ),
     ),
   );
-
-  void _sendMessage() {
-    final text = _messageController.text.trim();
-    if (text.isEmpty) return;
-    setState(() {
-      _messages.add(
-        _MessengerMessage(
-          sender: 'You',
-          initial: 'Y',
-          text: text,
-          time: 'Now',
-          isOutgoing: true,
-        ),
-      );
-      _messageController.clear();
-    });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeOut,
-        );
-      }
-    });
-  }
 }
 
 class _ChatHeader extends StatelessWidget {
   final String hiveName;
   final String memberSummary;
+  final String icon;
 
-  const _ChatHeader({required this.hiveName, required this.memberSummary});
+  const _ChatHeader({
+    required this.hiveName,
+    required this.memberSummary,
+    required this.icon,
+  });
 
   @override
   Widget build(BuildContext context) => Row(
     children: [
-      CircleAvatar(backgroundColor: Color(0x3342A5F5), child: Text('🧪')),
-      SizedBox(width: 10),
+      CircleAvatar(backgroundColor: const Color(0x3342A5F5), child: Text(icon)),
+      const SizedBox(width: 10),
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             hiveName,
-            style: TextStyle(
+            style: const TextStyle(
               color: AppColors.honeyDark,
               fontWeight: FontWeight.bold,
               fontSize: 17,
@@ -378,7 +502,7 @@ class _ChatHeader extends StatelessWidget {
           ),
           Text(
             memberSummary,
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+            style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
           ),
         ],
       ),
@@ -416,20 +540,4 @@ class _PinnedAnnouncement extends StatelessWidget {
       ],
     ),
   );
-}
-
-class _MessengerMessage {
-  final String sender;
-  final String initial;
-  final String text;
-  final String time;
-  final bool isOutgoing;
-
-  const _MessengerMessage({
-    required this.sender,
-    required this.initial,
-    required this.text,
-    required this.time,
-    this.isOutgoing = false,
-  });
 }

@@ -5,6 +5,7 @@ import '../widgets/honeycomb_background.dart';
 import '../widgets/reusable_widgets.dart';
 import 'login_page.dart';
 import 'student_onboarding_page.dart';
+import '../services/app_state.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -38,7 +39,7 @@ class _SignUpPageState extends State<SignUpPage> {
     if (_formKey.currentState?.validate() ?? false) {
       if (!_agreeTerms) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Please agree to the Terms & Conditions'),
             backgroundColor: AppColors.errorRed,
             behavior: SnackBarBehavior.floating,
@@ -47,12 +48,19 @@ class _SignUpPageState extends State<SignUpPage> {
         return;
       }
       setState(() => _isLoading = true);
-      Future.delayed(Duration(seconds: 1), () {
+      Future.delayed(const Duration(seconds: 1), () {
         if (!mounted) return;
         setState(() => _isLoading = false);
+
+        // Save partial user data to start session
+        AppState().updateUser(UserData(
+          name: _nameController.text.trim(),
+          username: _emailController.text.split('@').first,
+        ));
+
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => StudentOnboardingPage()),
+          MaterialPageRoute(builder: (_) => const StudentOnboardingPage()),
         );
       });
     }

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../theme/app_theme.dart';
 import '../widgets/honeycomb_background.dart';
 import '../widgets/reusable_widgets.dart';
+import '../services/app_state.dart';
 
 class CreateHivePage extends StatefulWidget {
   const CreateHivePage({super.key});
@@ -47,6 +49,20 @@ class _CreateHivePageState extends State<CreateHivePage> {
     if (_formKey.currentState?.validate() ?? false) {
       setState(() => _isCreating = true);
       Future.delayed(Duration(seconds: 1), () {
+        final hiveName = _nameController.text.trim();
+        final subject = _selectedSubject == 'Custom' 
+            ? _customSubjectController.text.trim() 
+            : _selectedSubject!;
+        
+        final newHive = HiveData(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          name: hiveName,
+          subject: subject,
+          icon: _getSubjectIcon(subject),
+        );
+
+        AppState().addHive(newHive);
+
         setState(() {
           _isCreating = false;
           _generatedCode = List.generate(
@@ -56,6 +72,17 @@ class _CreateHivePageState extends State<CreateHivePage> {
           _showSuccess = true;
         });
       });
+    }
+  }
+
+  String _getSubjectIcon(String subject) {
+    switch (subject.toLowerCase()) {
+      case 'physics': return '🧪';
+      case 'mathematics': return '📐';
+      case 'biology': return '🌿';
+      case 'chemistry': return '⚗️';
+      case 'research': return '🔬';
+      default: return '🐝';
     }
   }
 
@@ -113,8 +140,12 @@ class _CreateHivePageState extends State<CreateHivePage> {
                     controller: _nameController,
                     hintText: 'e.g. Chemistry Group',
                     prefixIcon: Icons.group,
-                    validator: (v) =>
-                        v?.isEmpty ?? true ? 'Please enter a hive name' : null,
+                    validator: (v) {
+                      final val = v?.trim() ?? '';
+                      if (val.isEmpty) return 'Please enter a hive name';
+                      if (val.length > 30) return 'Max 30 characters allowed';
+                      return null;
+                    },
                   ),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -327,9 +358,14 @@ class _CreateHivePageState extends State<CreateHivePage> {
                 ),
                 SizedBox(height: 16),
                 TextButton.icon(
-                  onPressed: () {},
-                  icon: Icon(Icons.copy, color: AppColors.honeyDark),
-                  label: Text(
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: _generatedCode));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Invite code $_generatedCode copied to clipboard!')),
+                    );
+                  },
+                  icon: const Icon(Icons.copy, color: AppColors.honeyDark),
+                  label: const Text(
                     'Copy Code',
                     style: TextStyle(
                       color: AppColors.honeyDark,

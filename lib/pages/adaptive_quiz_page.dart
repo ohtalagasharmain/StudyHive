@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../widgets/honeycomb_background.dart';
 import 'quiz_results_page.dart';
+import '../services/app_state.dart';
 
 class AdaptiveQuizPage extends StatefulWidget {
   final String type;
@@ -33,129 +34,118 @@ class _AdaptiveQuizPageState extends State<AdaptiveQuizPage> {
   bool _isAdaptive = false;
   int _consecutiveCorrect = 0;
   String _currentDifficulty = 'Medium';
-
-  final List<Map<String, dynamic>> _questions = [
-    {
-      'q': "An object is moving at a constant velocity. Which of the following is true?",
-      'options': [
-        'Net force is zero',
-        'Forces are balanced',
-        'Acceleration is constant',
-        'Speed is increasing',
-      ],
-      'correct': 0,
-      'hint': "Newton's First Law — objects in motion stay in motion unless a net force acts on them.",
-      'diff': 'Easy',
-    },
-    {
-      'q': 'A 10-kg object experiences a net force of 30 N. What is its acceleration?',
-      'options': ['300 m/s²', '0.33 m/s²', '3 m/s²', '10 m/s²'],
-      'correct': 2,
-      'hint': 'Use F = m × a. Solve for a = F/m.',
-      'diff': 'Easy',
-    },
-    {
-      'q': 'Which law best explains why you feel pushed back when a car accelerates?',
-      'options': [
-        "Newton's 1st Law",
-        "Newton's 2nd Law",
-        "Newton's 3rd Law",
-        'Law of Gravitation',
-      ],
-      'correct': 0,
-      'hint':
-          'Your body resists the change in motion — it wants to stay at rest.',
-      'diff': 'Medium',
-    },
-    {
-      'q': 'A 25-N force pushes an object 4 m. How much work is done?',
-      'options': ['6.25 J', '29 J', '100 J', '21 J'],
-      'correct': 2,
-      'hint': 'Work (W) = Force (F) × distance (d). Unit is Joules (J).',
-      'diff': 'Medium',
-    },
-    {
-      'q': 'Which of the following is NOT an action-reaction pair?',
-      'options': [
-        'Earth pulling you down and you pulling Earth up',
-        'Foot pushing ground and ground pushing foot',
-        'Rocket pushing gases down and gases pushing rocket up',
-        'Normal force and weight on a flat surface',
-      ],
-      'correct': 3,
-      'hint': 'Action-reaction forces must act on DIFFERENT objects. Both normal and weight act on the same object.',
-      'diff': 'Hard',
-    },
-    {
-      'q': 'Kinetic energy depends on which two quantities?',
-      'options': [
-        'Force and distance',
-        'Mass and velocity',
-        'Mass and height',
-        'Time and power',
-      ],
-      'correct': 1,
-      'hint': 'KE = ½ m v²',
-      'diff': 'Easy',
-    },
-    {
-      'q': 'An incline has angle θ with the horizontal. What is the component of weight parallel to the incline?',
-      'options': ['mg·cos(θ)', 'mg·sin(θ)', 'mg·tan(θ)', 'mg'],
-      'correct': 1,
-      'hint': 'Parallel = opposite side of the triangle = sin. Perpendicular = adjacent = cos.',
-      'diff': 'Hard',
-    },
-    {
-      'q': 'Momentum is conserved under which condition?',
-      'options': [
-        'Always',
-        'Only in elastic collisions',
-        'When net external force is zero',
-        'When KE is constant',
-      ],
-      'correct': 2,
-      'hint': 'Law of Conservation of Momentum applies to isolated systems.',
-      'diff': 'Medium',
-    },
-    {
-      'q': 'A ball is thrown straight up. At maximum height, its acceleration is:',
-      'options': ['0 m/s²', '9.8 m/s² upward', '9.8 m/s² downward', 'Varies'],
-      'correct': 2,
-      'hint': 'Gravity always acts downward with g ≈ 9.8 m/s² even at the top of the trajectory.',
-      'diff': 'Medium',
-    },
-    {
-      'q': 'Which surface would have the highest coefficient of friction?',
-      'options': ['Ice on ice', 'Wet road', 'Dry asphalt', 'Teflon on steel'],
-      'correct': 2,
-      'hint': 'Rougher, more interlocking surfaces = higher friction.',
-      'diff': 'Easy',
-    },
-  ];
-
-  String get _effectiveDifficulty {
-    if (widget.type == 'Adaptive Quiz') return _currentDifficulty;
-    return widget.difficulty;
-  }
-
-  Color get _diffColor {
-    switch (_effectiveDifficulty) {
-      case 'Easy':
-        return AppColors.successGreen;
-      case 'Medium':
-        return AppColors.accentOrange;
-      case 'Hard':
-        return AppColors.errorRed;
-      default:
-        return AppColors.accentOrange;
-    }
-  }
+  late final List<Map<String, dynamic>> _questions;
 
   @override
   void initState() {
     super.initState();
     _isAdaptive = widget.type == 'Adaptive Quiz';
     _currentDifficulty = widget.difficulty;
+    
+    // Slice or repeat hardcoded questions to match requested count
+    final allQuestions = [
+      {
+        'q': "An object is moving at a constant velocity. Which of the following is true?",
+        'options': [
+          'Net force is zero',
+          'Forces are balanced',
+          'Acceleration is constant',
+          'Speed is increasing',
+        ],
+        'correct': 0,
+        'hint': "Newton's First Law — objects in motion stay in motion unless a net force acts on them.",
+        'diff': 'Easy',
+      },
+      {
+        'q': 'A 10-kg object experiences a net force of 30 N. What is its acceleration?',
+        'options': ['300 m/s²', '0.33 m/s²', '3 m/s²', '10 m/s²'],
+        'correct': 2,
+        'hint': 'Use F = m × a. Solve for a = F/m.',
+        'diff': 'Easy',
+      },
+      {
+        'q': 'Which law best explains why you feel pushed back when a car accelerates?',
+        'options': [
+          "Newton's 1st Law",
+          "Newton's 2nd Law",
+          "Newton's 3rd Law",
+          'Law of Gravitation',
+        ],
+        'correct': 0,
+        'hint':
+            'Your body resists the change in motion — it wants to stay at rest.',
+        'diff': 'Medium',
+      },
+      {
+        'q': 'A 25-N force pushes an object 4 m. How much work is done?',
+        'options': ['6.25 J', '29 J', '100 J', '21 J'],
+        'correct': 2,
+        'hint': 'Work (W) = Force (F) × distance (d). Unit is Joules (J).',
+        'diff': 'Medium',
+      },
+      {
+        'q': 'Which of the following is NOT an action-reaction pair?',
+        'options': [
+          'Earth pulling you down and you pulling Earth up',
+          'Foot pushing ground and ground pushing foot',
+          'Rocket pushing gases down and gases pushing rocket up',
+          'Normal force and weight on a flat surface',
+        ],
+        'correct': 3,
+        'hint': 'Action-reaction forces must act on DIFFERENT objects. Both normal and weight act on the same object.',
+        'diff': 'Hard',
+      },
+      {
+        'q': 'Kinetic energy depends on which two quantities?',
+        'options': [
+          'Force and distance',
+          'Mass and velocity',
+          'Mass and height',
+          'Time and power',
+        ],
+        'correct': 1,
+        'hint': 'KE = ½ m v²',
+        'diff': 'Easy',
+      },
+      {
+        'q': 'An incline has angle θ with the horizontal. What is the component of weight parallel to the incline?',
+        'options': ['mg·cos(θ)', 'mg·sin(θ)', 'mg·tan(θ)', 'mg'],
+        'correct': 1,
+        'hint': 'Parallel = opposite side of the triangle = sin. Perpendicular = adjacent = cos.',
+        'diff': 'Hard',
+      },
+      {
+        'q': 'Momentum is conserved under which condition?',
+        'options': [
+          'Always',
+          'Only in elastic collisions',
+          'When net external force is zero',
+          'When KE is constant',
+        ],
+        'correct': 2,
+        'hint': 'Law of Conservation of Momentum applies to isolated systems.',
+        'diff': 'Medium',
+      },
+      {
+        'q': 'A ball is thrown straight up. At maximum height, its acceleration is:',
+        'options': ['0 m/s²', '9.8 m/s² upward', '9.8 m/s² downward', 'Varies'],
+        'correct': 2,
+        'hint': 'Gravity always acts downward with g ≈ 9.8 m/s² even at the top of the trajectory.',
+        'diff': 'Medium',
+      },
+      {
+        'q': 'Which surface would have the highest coefficient of friction?',
+        'options': ['Ice on ice', 'Wet road', 'Dry asphalt', 'Teflon on steel'],
+        'correct': 2,
+        'hint': 'Rougher, more interlocking surfaces = higher friction.',
+        'diff': 'Easy',
+      },
+    ];
+
+    _questions = List.generate(
+      widget.numQuestions,
+      (i) => allQuestions[i % allQuestions.length],
+    );
   }
 
   void _selectOption(int idx) {
@@ -206,6 +196,22 @@ class _AdaptiveQuizPageState extends State<AdaptiveQuizPage> {
         _showHint = false;
       });
     } else {
+      // Record study activity
+      final now = DateTime.now();
+      AppState().addSession(UserSession(
+        startTime: now.subtract(const Duration(minutes: 15)), // Mock duration
+        endTime: now,
+        topic: widget.topic,
+      ));
+      
+      AppState().addQuizResult(QuizResult(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        topic: widget.topic,
+        score: _correct.length,
+        total: _questions.length,
+        date: now,
+      ));
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -267,6 +273,19 @@ class _AdaptiveQuizPageState extends State<AdaptiveQuizPage> {
     );
   }
 
+  Color _effectiveDiffColor(String diff) {
+    switch (diff) {
+      case 'Easy':
+        return AppColors.successGreen;
+      case 'Medium':
+        return AppColors.accentOrange;
+      case 'Hard':
+        return AppColors.errorRed;
+      default:
+        return AppColors.accentOrange;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final progress = (_current + 1) / _questions.length;
@@ -276,6 +295,9 @@ class _AdaptiveQuizPageState extends State<AdaptiveQuizPage> {
         : (q['diff'] as String) == 'Medium'
         ? AppColors.accentOrange
         : AppColors.errorRed;
+    
+    final effectiveDiff = _isAdaptive ? _currentDifficulty : widget.difficulty;
+    final effectiveDiffColor = _effectiveDiffColor(effectiveDiff);
 
     return HoneycombBackground(
       showGradient: false,
@@ -329,13 +351,13 @@ class _AdaptiveQuizPageState extends State<AdaptiveQuizPage> {
                           vertical: 5,
                         ),
                         decoration: BoxDecoration(
-                          color: _diffColor.withValues(alpha: 0.15),
+                          color: effectiveDiffColor.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          _effectiveDifficulty,
+                          effectiveDiff,
                           style: TextStyle(
-                            color: _diffColor,
+                            color: effectiveDiffColor,
                             fontWeight: FontWeight.bold,
                             fontSize: 11,
                           ),

@@ -10,7 +10,8 @@ import 'create_hive_page.dart';
 import 'join_hive_page.dart';
 import 'study_materials_page.dart';
 import 'hive_overview_page.dart';
-import 'hive_chat_page.dart';
+import 'chat_page.dart';
+import '../services/app_state.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -23,10 +24,10 @@ class _MainShellState extends State<MainShell> {
   int _currentIndex = 0;
 
   final List<Widget> _pages = [
-    HomePage(),
-    HivesPage(),
-    HiveChatPage(),
-    ProfilePage(),
+    const HomePage(),
+    const HivesPage(),
+    const _ChatWrapper(),
+    const ProfilePage(),
   ];
 
   void _onNavTap(int index) {
@@ -225,6 +226,32 @@ class _MainShellState extends State<MainShell> {
         padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
         child: BottomNav(currentIndex: _currentIndex, onTap: _onNavTap),
       ),
+    );
+  }
+}
+
+class _ChatWrapper extends StatelessWidget {
+  const _ChatWrapper();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: AppState(),
+      builder: (context, _) {
+        final user = AppState().user;
+        final hives = AppState().hives.where((h) => 
+          h.membersList.contains(user.name) || 
+          h.membersList.contains('You') || 
+          h.owned).toList();
+        if (hives.isEmpty) {
+          return const Center(child: Text('No active chats. Join a hive to start chatting!'));
+        }
+        return ChatPage(
+          hiveId: hives.first.id,
+          hiveName: hives.first.name,
+          memberSummary: '${hives.first.members} members',
+        );
+      },
     );
   }
 }

@@ -6,6 +6,9 @@ import '../widgets/reusable_widgets.dart';
 import 'login_page.dart';
 import 'signup_page.dart';
 
+import 'main_shell.dart';
+import '../services/app_state.dart';
+
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
 
@@ -25,28 +28,39 @@ class _SplashPageState extends State<SplashPage>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 1500),
     );
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: Interval(0.0, 0.6, curve: Curves.easeIn),
+        curve: const Interval(0.0, 0.6, curve: Curves.easeIn),
       ),
     );
     _scaleAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: Interval(0.0, 0.6, curve: Curves.elasticOut),
+        curve: const Interval(0.0, 0.6, curve: Curves.elasticOut),
       ),
     );
-    _slideAnimation = Tween<Offset>(begin: Offset(0, 0.3), end: Offset.zero)
+    _slideAnimation = Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero)
         .animate(
           CurvedAnimation(
             parent: _controller,
-            curve: Interval(0.3, 1.0, curve: Curves.easeOutCubic),
+            curve: const Interval(0.3, 1.0, curve: Curves.easeOutCubic),
           ),
         );
-    _controller.forward();
+    
+    _controller.forward().then((_) => _checkSession());
+  }
+
+  void _checkSession() {
+    // If username is not the default, assume logged in
+    if (AppState().user.username != 'studyhive') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MainShell()),
+      );
+    }
   }
 
   @override

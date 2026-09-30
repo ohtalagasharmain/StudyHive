@@ -7,9 +7,10 @@ import '../widgets/honeycomb_background.dart';
 import '../widgets/reusable_widgets.dart';
 import 'hive_members_page.dart';
 import 'chat_page.dart';
-import 'chat_details_page.dart';
-import 'create_quiz_page.dart';
 import 'study_materials_page.dart';
+import 'edit_hive_page.dart';
+import 'create_quiz_page.dart';
+import '../services/app_state.dart';
 
 class HiveOverviewPage extends StatefulWidget {
   final String hiveId;
@@ -57,93 +58,97 @@ class _HiveOverviewPageState extends State<HiveOverviewPage>
 
   @override
   Widget build(BuildContext context) {
-    return HoneycombBackground(
-      showGradient: false,
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(context),
-              Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildOverviewTab(),
-                    StudyMaterialsPage(
-                      embedded: true,
-                      hiveId: widget.hiveId,
-                      hiveName: widget.hiveName,
+    return ListenableBuilder(
+      listenable: AppState(),
+      builder: (context, _) {
+        HiveData hive;
+        try {
+          hive = AppState().hives.firstWhere((h) => h.id == widget.hiveId);
+        } catch (_) {
+          hive = HiveData(
+            id: widget.hiveId,
+            name: widget.hiveName,
+            subject: widget.hiveSubject,
+            icon: widget.hiveIcon,
+            members: widget.hiveMembers,
+          );
+        }
+
+        return HoneycombBackground(
+          showGradient: false,
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            body: SafeArea(
+              child: Column(
+                children: [
+                  _buildHeader(context, hive),
+                  Expanded(
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [
+                        _buildOverviewTab(hive),
+                        StudyMaterialsPage(
+                          embedded: true,
+                          hiveId: hive.id,
+                          hiveName: hive.name,
+                        ),
+                        _buildQuizTab(hive),
+                        ChatPage(
+                          showAppBar: false,
+                          showBottomNavigationBar: false,
+                          hiveId: hive.id,
+                          hiveName: hive.name,
+                          memberSummary: '${hive.members} members',
+                        ),
+                      ],
                     ),
-                    _buildQuizTab(),
-                    ChatPage(
-                      showAppBar: false,
-                      showBottomNavigationBar: false,
-                      hiveId: widget.hiveId,
-                      hiveName: widget.hiveName,
-                      memberSummary: '7 members',
+                  ),
+                ],
+              ),
+            ),
+            bottomNavigationBar: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                NavigationBar(
+                  selectedIndex: _tabController.index,
+                  onDestinationSelected: (index) {
+                _tabController.animateTo(index);
+              },
+              backgroundColor: AppColors.cardWhite,
+                  indicatorColor: AppColors.honeyYellow.withValues(alpha: 0.45),
+                  height: 72,
+                  destinations: [
+                    NavigationDestination(
+                      icon: Icon(Icons.dashboard_outlined),
+                      selectedIcon: Icon(Icons.dashboard),
+                      label: 'Overview',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.folder_outlined),
+                      selectedIcon: Icon(Icons.folder),
+                      label: 'Materials',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.quiz_outlined),
+                      selectedIcon: Icon(Icons.quiz),
+                      label: 'Quiz',
+                    ),
+                    NavigationDestination(
+                      icon: Icon(Icons.chat_bubble_outline),
+                      selectedIcon: Icon(Icons.chat_bubble),
+                      label: 'Chat',
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-        ),
-        bottomNavigationBar: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            NavigationBar(
-              selectedIndex: _tabController.index,
-              onDestinationSelected: (index) {
-                if (index == 3) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ChatDetailsPage(
-                        hiveId: widget.hiveId,
-                        hiveName: widget.hiveName,
-                        memberSummary: '7 members',
-                        showChat: true,
-                      ),
-                    ),
-                  );
-                } else {
-                  _tabController.animateTo(index);
-                }
-              },
-              backgroundColor: AppColors.cardWhite,
-              indicatorColor: AppColors.honeyYellow.withValues(alpha: 0.45),
-              height: 72,
-              destinations: [
-                NavigationDestination(
-                  icon: Icon(Icons.dashboard_outlined),
-                  selectedIcon: Icon(Icons.dashboard),
-                  label: 'Overview',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.folder_outlined),
-                  selectedIcon: Icon(Icons.folder),
-                  label: 'Materials',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.quiz_outlined),
-                  selectedIcon: Icon(Icons.quiz),
-                  label: 'Quiz',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.chat_bubble_outline),
-                  selectedIcon: Icon(Icons.chat_bubble),
-                  label: 'Chat',
-                ),
               ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader(BuildContext context, HiveData hive) {
     return SafeArea(
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -158,10 +163,10 @@ class _HiveOverviewPageState extends State<HiveOverviewPage>
               height: 38,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: Color(0xFF42A5F5).withValues(alpha: 0.18),
+                color: hive.color.withValues(alpha: 0.18),
                 borderRadius: BorderRadius.circular(11),
               ),
-              child: Text(widget.hiveIcon, style: TextStyle(fontSize: 20)),
+              child: Text(hive.icon, style: TextStyle(fontSize: 20)),
             ),
             SizedBox(width: 10),
             Expanded(
@@ -169,14 +174,14 @@ class _HiveOverviewPageState extends State<HiveOverviewPage>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    widget.hiveName,
+                    hive.name,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
                     ),
                   ),
                   Text(
-                    '7 members',
+                    '${hive.members} members',
                     style: TextStyle(
                       fontSize: 11,
                       color: AppColors.textSecondary,
@@ -185,21 +190,28 @@ class _HiveOverviewPageState extends State<HiveOverviewPage>
                 ],
               ),
             ),
-            if (_tabController.index == 1 || _tabController.index == 2)
+            if (hive.owned)
               IconButton(
-                onPressed: () {},
-                tooltip: 'Focus Session',
-                icon: Icon(Icons.timer, color: AppColors.purpleAccent),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => EditHivePage(hiveId: hive.id),
+                    ),
+                  );
+                },
+                icon: Icon(Icons.edit_outlined, color: AppColors.honeyDark),
+                tooltip: 'Edit Hive',
               ),
             IconButton(
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => HiveMembersPage()),
+                  MaterialPageRoute(builder: (_) => HiveMembersPage(hiveId: hive.id)),
                 );
               },
-              icon: Icon(Icons.people_outline, color: AppColors.honeyDark),
-              tooltip: 'Chat details',
+              icon: const Icon(Icons.people_outline, color: AppColors.honeyDark),
+              tooltip: 'Member list',
             ),
           ],
         ),
@@ -284,7 +296,7 @@ class _HiveOverviewPageState extends State<HiveOverviewPage>
     );
   }
 
-  Widget _buildMissionCard(BuildContext context) {
+  Widget _buildMissionCard(BuildContext context, HiveData hive) {
     return Container(
       padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -362,7 +374,7 @@ class _HiveOverviewPageState extends State<HiveOverviewPage>
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const CreateQuizPage()),
+                  MaterialPageRoute(builder: (_) => CreateQuizPage(hiveId: hive.id)),
                 );
               },
               style: ElevatedButton.styleFrom(
@@ -387,19 +399,19 @@ class _HiveOverviewPageState extends State<HiveOverviewPage>
     );
   }
 
-  Widget _buildOverviewTab() {
+  Widget _buildOverviewTab(HiveData hive) {
     return SingleChildScrollView(
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           _buildMasteryCard(),
-          SizedBox(height: 20),
-          _buildMissionCard(context),
-          SizedBox(height: 4),
-          SectionHeader(title: 'Progress'),
-          SizedBox(height: 12),
+          const SizedBox(height: 20),
+          _buildMissionCard(context, hive),
+          const SizedBox(height: 4),
+          const SectionHeader(title: 'Progress'),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
@@ -640,14 +652,14 @@ class _HiveOverviewPageState extends State<HiveOverviewPage>
     );
   }
 
-  Widget _buildQuizTab() {
+  Widget _buildQuizTab(HiveData hive) {
     return SingleChildScrollView(
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SectionHeader(title: 'Hive Quizzes'),
-          SizedBox(height: 12),
+          const SectionHeader(title: 'Hive Quizzes'),
+          const SizedBox(height: 12),
           ...[
             _buildQuizCard(
               'Newton\'s Laws of Motion',
@@ -658,18 +670,18 @@ class _HiveOverviewPageState extends State<HiveOverviewPage>
             _buildQuizCard('Kinematics Basics', '20 questions', 'Easy', 90),
             _buildQuizCard('Work, Energy, Power', '25 questions', 'Hard', 64),
           ],
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           PrimaryButton(
             text: 'Create Hive Quiz',
             icon: Icons.add,
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const CreateQuizPage()),
+                MaterialPageRoute(builder: (_) => CreateQuizPage(hiveId: hive.id)),
               );
             },
           ),
-          SizedBox(height: 80),
+          const SizedBox(height: 80),
         ],
       ),
     );

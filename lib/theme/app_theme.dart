@@ -127,4 +127,19 @@ class AppTheme {
       ),
     );
   }
+
+  static ThemeData get darkTheme {
+    return ThemeData(
+      brightness: Brightness.dark,
+      primaryColor: AppColors.honeyDark,
+      scaffoldBackgroundColor: const Color(0xFF121212),
+      colorScheme: ColorScheme.fromSeed(
+        brightness: Brightness.dark,
+        seedColor: AppColors.honeyDark,
+        primary: AppColors.honeyDark,
+        secondary: AppColors.honeyYellow,
+      ),
+      // Extend other theme properties as needed
+    );
+  }
 }

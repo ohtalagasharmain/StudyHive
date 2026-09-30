@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../services/subscription_router.dart';
 import '../theme/app_theme.dart';
 import '../widgets/honeycomb_background.dart';
 import '../widgets/reusable_widgets.dart';
 import 'signup_page.dart';
-import 'main_shell.dart';
+import '../services/app_state.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -15,8 +16,8 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController(text: 'studyhive@gmail.com');
-  final _passwordController = TextEditingController(text: 'studyhive');
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading = false;
   int _selectedTab = 0;
@@ -31,14 +32,21 @@ class _LoginPageState extends State<LoginPage> {
   void _handleLogin() {
     if (_formKey.currentState?.validate() ?? false) {
       setState(() => _isLoading = true);
-      Future.delayed(Duration(seconds: 1), () {
+      Future.delayed(const Duration(seconds: 1), () {
         if (!mounted) return;
         setState(() => _isLoading = false);
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => MainShell()),
-        );
+        SubscriptionRouter.navigateBasedOnSubscription(context);
       });
+
+      // Mock login persistence
+        final email = _emailController.text.trim();
+        final username = email.split('@').first;
+        
+        AppState().updateUser(UserData(
+          name: username.toUpperCase(),
+          username: username,
+          subjects: 'General Study',
+        ));
     }
   }
 
@@ -176,7 +184,7 @@ class _LoginPageState extends State<LoginPage> {
                             if (value?.isEmpty ?? true) {
                               return 'Please enter your email';
                             }
-                            if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                            if (!RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$')
                                 .hasMatch(value!)) {
                               return 'Please enter a valid email';
                             }
@@ -213,8 +221,43 @@ class _LoginPageState extends State<LoginPage> {
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
                             TextButton(
-                              onPressed: () {},
-                              child: Text('Forgot Password?'),
+                              onPressed: () {
+                                final resetEmailController = TextEditingController(text: _emailController.text);
+                                showDialog(
+                                  context: context,
+                                  builder: (dialogContext) => AlertDialog(
+                                    title: const Text('Reset Password'),
+                                    content: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Text('Enter your registered email address to receive password reset instructions.'),
+                                        const SizedBox(height: 12),
+                                        TextField(
+                                          controller: resetEmailController,
+                                          decoration: const InputDecoration(labelText: 'Email Address'),
+                                        ),
+                                      ],
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(dialogContext),
+                                        child: const Text('Cancel'),
+                                      ),
+                                      ElevatedButton(
+                                        onPressed: () {
+                                          Navigator.pop(dialogContext);
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text('Password reset link sent to ${resetEmailController.text.isEmpty ? "your email" : resetEmailController.text}!')),
+                                          );
+                                        },
+                                        style: ElevatedButton.styleFrom(backgroundColor: AppColors.honeyDark),
+                                        child: const Text('Send Reset Link'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                              child: const Text('Forgot Password?'),
                             ),
                           ],
                         ),

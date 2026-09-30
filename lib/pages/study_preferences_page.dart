@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import '../services/subscription_router.dart';
 import '../theme/app_theme.dart';
 import '../widgets/honeycomb_background.dart';
 import '../widgets/reusable_widgets.dart';
-import 'main_shell.dart';
+
 
 class StudyPreferencesPage extends StatefulWidget {
   const StudyPreferencesPage({super.key});
@@ -324,11 +325,7 @@ class _StudyPreferencesPageState extends State<StudyPreferencesPage> {
                   text: 'Finish Setup',
                   icon: Icons.check_circle,
                   onPressed: () {
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(builder: (_) => MainShell()),
-                      (_) => false,
-                    );
+                    SubscriptionRouter.navigateBasedOnSubscription(context);
                   },
                 ),
               ],
