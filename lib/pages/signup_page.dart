@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../theme/app_theme.dart';
 import '../widgets/honeycomb_background.dart';
@@ -35,35 +36,61 @@ class _SignUpPageState extends State<SignUpPage> {
     super.dispose();
   }
 
-  void _handleSignUp() {
-    if (_formKey.currentState?.validate() ?? false) {
-      if (!_agreeTerms) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please agree to the Terms & Conditions'),
-            backgroundColor: AppColors.errorRed,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-        return;
-      }
-      setState(() => _isLoading = true);
-      Future.delayed(const Duration(seconds: 1), () {
-        if (!mounted) return;
-        setState(() => _isLoading = false);
+  Future<void> _handleSignUp() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
 
-        // Save partial user data to start session
-        AppState().updateUser(UserData(
-          name: _nameController.text.trim(),
-          username: _emailController.text.split('@').first,
-        ));
-
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const StudentOnboardingPage()),
-        );
-      });
+    if (!_agreeTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please agree to the Terms & Conditions'),
+          backgroundColor: AppColors.errorRed,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
     }
+
+    setState(() => _isLoading = true);
+
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    final name = _nameController.text.trim();
+
+    // Register locally in persistent AppState DB
+    await AppState().registerAccount(
+      email: email,
+      password: password,
+      name: name,
+    );
+
+    // Try Firebase Auth if configured
+    try {
+      final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      final user = credential.user;
+      if (user != null) {
+        await user.updateDisplayName(name);
+      }
+    } catch (e) {
+      debugPrint('Firebase sign up notice: $e');
+    }
+
+    if (!mounted) return;
+
+    AppState().updateUser(UserData(
+      name: name,
+      username: email.split('@').first,
+    ));
+
+    setState(() => _isLoading = false);
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const StudentOnboardingPage()),
+    );
   }
 
   @override
@@ -74,11 +101,10 @@ class _SignUpPageState extends State<SignUpPage> {
         backgroundColor: Colors.transparent,
         body: SafeArea(
           child: SingleChildScrollView(
-            padding: EdgeInsets.all(14),
+            padding: const EdgeInsets.all(14),
             child: Column(
               children: [
-                SizedBox(height: 20),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 Container(
                   decoration: BoxDecoration(
                     color: AppColors.cardWhite.withValues(alpha: 0.9),
@@ -92,16 +118,16 @@ class _SignUpPageState extends State<SignUpPage> {
                           onTap: () {
                             Navigator.pushReplacement(
                               context,
-                              MaterialPageRoute(builder: (_) => LoginPage()),
+                              MaterialPageRoute(builder: (_) => const LoginPage()),
                             );
                           },
                           child: Container(
-                            padding: EdgeInsets.symmetric(vertical: 5),
+                            padding: const EdgeInsets.symmetric(vertical: 5),
                             decoration: BoxDecoration(
                               color: _selectedTab == 0
                                   ? AppColors.honeyYellow.withValues(alpha: 0.5)
                                   : Colors.transparent,
-                              borderRadius: BorderRadius.horizontal(
+                              borderRadius: const BorderRadius.horizontal(
                                 left: Radius.circular(18),
                               ),
                             ),
@@ -124,12 +150,12 @@ class _SignUpPageState extends State<SignUpPage> {
                         child: GestureDetector(
                           onTap: () => setState(() => _selectedTab = 1),
                           child: Container(
-                            padding: EdgeInsets.symmetric(vertical: 5),
+                            padding: const EdgeInsets.symmetric(vertical: 5),
                             decoration: BoxDecoration(
                               color: _selectedTab == 1
                                   ? AppColors.honeyYellow.withValues(alpha: 0.5)
                                   : Colors.transparent,
-                              borderRadius: BorderRadius.horizontal(
+                              borderRadius: const BorderRadius.horizontal(
                                 right: Radius.circular(18),
                               ),
                             ),
@@ -151,9 +177,9 @@ class _SignUpPageState extends State<SignUpPage> {
                     ],
                   ),
                 ),
-                SizedBox(height: 24),
+                const SizedBox(height: 24),
                 Container(
-                  padding: EdgeInsets.all(14),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: AppColors.cardWhite,
                     borderRadius: BorderRadius.circular(28),
@@ -161,7 +187,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.08),
                         blurRadius: 20,
-                        offset: Offset(0, 8),
+                        offset: const Offset(0, 8),
                       ),
                     ],
                     border: Border.all(color: AppColors.honeyYellow, width: 2),
@@ -176,11 +202,9 @@ class _SignUpPageState extends State<SignUpPage> {
                             children: [
                               Text(
                                 'Create Account',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headlineMedium,
+                                style: Theme.of(context).textTheme.headlineMedium,
                               ),
-                              SizedBox(height: 8),
+                              const SizedBox(height: 8),
                               Text(
                                 'Join StudyHive today',
                                 style: Theme.of(context).textTheme.bodyLarge,
@@ -188,7 +212,7 @@ class _SignUpPageState extends State<SignUpPage> {
                             ],
                           ),
                         ),
-                        SizedBox(height: 28),
+                        const SizedBox(height: 28),
                         CustomTextField(
                           label: 'Full Name',
                           controller: _nameController,
@@ -211,8 +235,7 @@ class _SignUpPageState extends State<SignUpPage> {
                             if (value?.isEmpty ?? true) {
                               return 'Please enter your email';
                             }
-                            if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                                .hasMatch(value!)) {
+                            if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value!)) {
                               return 'Please enter a valid email';
                             }
                             return null;
@@ -225,9 +248,7 @@ class _SignUpPageState extends State<SignUpPage> {
                           prefixIcon: Icons.lock_outline,
                           suffixIcon: IconButton(
                             icon: Icon(
-                              _obscurePassword
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
+                              _obscurePassword ? Icons.visibility_off : Icons.visibility,
                               color: AppColors.honeyDark,
                             ),
                             onPressed: () => setState(
@@ -251,14 +272,11 @@ class _SignUpPageState extends State<SignUpPage> {
                           prefixIcon: Icons.lock_outline,
                           suffixIcon: IconButton(
                             icon: Icon(
-                              _obscureConfirmPassword
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
+                              _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
                               color: AppColors.honeyDark,
                             ),
                             onPressed: () => setState(
-                              () => _obscureConfirmPassword =
-                                  !_obscureConfirmPassword,
+                              () => _obscureConfirmPassword = !_obscureConfirmPassword,
                             ),
                           ),
                           validator: (value) {
@@ -275,8 +293,7 @@ class _SignUpPageState extends State<SignUpPage> {
                           children: [
                             Checkbox(
                               value: _agreeTerms,
-                              onChanged: (v) =>
-                                  setState(() => _agreeTerms = v ?? false),
+                              onChanged: (v) => setState(() => _agreeTerms = v ?? false),
                               activeColor: AppColors.honeyDark,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(4),
@@ -286,14 +303,14 @@ class _SignUpPageState extends State<SignUpPage> {
                               child: Text.rich(
                                 TextSpan(
                                   text: 'I agree to the ',
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     color: AppColors.textSecondary,
                                     fontSize: 13,
                                   ),
                                   children: [
                                     TextSpan(
                                       text: 'Terms & Conditions',
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         color: AppColors.honeyDark,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -304,17 +321,17 @@ class _SignUpPageState extends State<SignUpPage> {
                             ),
                           ],
                         ),
-                        SizedBox(height: 16),
+                        const SizedBox(height: 16),
                         PrimaryButton(
                           text: 'Create Account',
                           isLoading: _isLoading,
                           onPressed: _handleSignUp,
                         ),
-                        SizedBox(height: 20),
+                        const SizedBox(height: 20),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(
+                            const Text(
                               'Already have an account? ',
                               style: TextStyle(color: AppColors.textSecondary),
                             ),
@@ -323,11 +340,11 @@ class _SignUpPageState extends State<SignUpPage> {
                                 Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => LoginPage(),
+                                    builder: (_) => const LoginPage(),
                                   ),
                                 );
                               },
-                              child: Text(
+                              child: const Text(
                                 'Log In',
                                 style: TextStyle(
                                   color: AppColors.honeyDark,

@@ -103,9 +103,8 @@ class _StudyMaterialsPageState extends State<StudyMaterialsPage>
     setState(() => _isUploading = true);
 
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
+      final PlatformFile? file = await FilePicker.pickFile(
         type: FileType.custom,
-        withData: true,
         allowedExtensions: [
           'pdf',
           'doc',
@@ -118,19 +117,15 @@ class _StudyMaterialsPageState extends State<StudyMaterialsPage>
         ],
       );
 
-      if (result != null) {
-        PlatformFile file = result.files.first;
-
-        if (file.bytes == null) {
-          throw Exception('Could not read the selected file.');
-        }
+      if (file != null) {
+        final bytes = await file.readAsBytes();
 
         final type = _getMaterialType(file.extension);
         final color = _getColorForType(type);
         final icon = _getIconForType(type);
 
         final response = await http.post(
-          Uri.parse('http://localhost:8080/resources/upload'),
+          Uri.parse('http://10.0.2.2:8080/resources/upload'),
           headers: {
             'Content-Type': 'application/json',
           },
@@ -140,7 +135,7 @@ class _StudyMaterialsPageState extends State<StudyMaterialsPage>
             'date': 'Just now',
             'userId': '1',
             'hiveId': widget.hiveId,
-            'fileBase64': base64Encode(file.bytes!),
+            'fileBase64': base64Encode(bytes),
           }),
         );
 
@@ -159,7 +154,7 @@ class _StudyMaterialsPageState extends State<StudyMaterialsPage>
           type: type,
           date: resource['date'],
           path: 'http://localhost:8080${resource['path']}',
-          bytes: file.bytes,
+          bytes: bytes,
           icon: icon,
           color: color,
         );

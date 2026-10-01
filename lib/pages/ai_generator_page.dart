@@ -121,7 +121,7 @@ class _AIGeneratorPageState extends State<AIGeneratorPage> {
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
-                              '${(selectedFile!.size / 1024).toStringAsFixed(1)} KB • ${(selectedFile!.extension ?? "file").toUpperCase()}',
+                              '${((selectedFile!.lengthSync() ?? 0) / 1024).toStringAsFixed(1)} KB • ${(selectedFile!.extension ?? "file").toUpperCase()}',
                               style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
                             ),
                           ],
@@ -139,12 +139,12 @@ class _AIGeneratorPageState extends State<AIGeneratorPage> {
                 children: [
                   OutlinedButton.icon(
                     onPressed: () async {
-                      FilePickerResult? result = await FilePicker.platform.pickFiles(
+                      final PlatformFile? picked = await FilePicker.pickFile(
                         type: FileType.custom,
                         allowedExtensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx', 'ppt', 'pptx'],
                       );
-                      if (result != null) {
-                        setSheetState(() => selectedFile = result.files.first);
+                      if (picked != null) {
+                        setSheetState(() => selectedFile = picked);
                       }
                     },
                     icon: const Icon(Icons.add_photo_alternate_outlined, size: 18),

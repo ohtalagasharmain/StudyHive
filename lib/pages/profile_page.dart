@@ -89,10 +89,10 @@ class _ProfilePageState extends State<ProfilePage> {
                 CircleAvatar(
                   radius: 38,
                   backgroundColor: AppColors.honeyYellow.withValues(alpha: 0.35),
-                  backgroundImage: user.profilePicturePath != null 
+                  backgroundImage: (user.profilePicturePath != null && File(user.profilePicturePath!).existsSync()) 
                       ? FileImage(File(user.profilePicturePath!)) 
                       : null,
-                  child: user.profilePicturePath == null 
+                  child: (user.profilePicturePath == null || !File(user.profilePicturePath!).existsSync()) 
                       ? const Icon(Icons.person, size: 42, color: AppColors.honeyDark)
                       : null,
                 ),

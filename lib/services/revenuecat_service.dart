@@ -76,7 +76,8 @@ class RevenueCatService {
     String entitlementId = defaultEntitlementId,
   }) async {
     try {
-      CustomerInfo customerInfo = await Purchases.purchasePackage(package);
+      final PurchaseResult result = await Purchases.purchasePackage(package);
+      final CustomerInfo customerInfo = result.customerInfo;
       final entitlement = customerInfo.entitlements.all[entitlementId];
       return entitlement?.isActive ?? false;
     } catch (e) {

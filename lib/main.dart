@@ -1,13 +1,29 @@
 import 'package:flutter/material.dart';
-import 'services/revenuecat_service.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+
+import 'services/revenuecat_service.dart';
 import 'theme/app_theme.dart';
 import 'pages/splash_page.dart';
 import 'services/app_state.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await RevenueCatService.init();
+
+  // Initialize Firebase safely
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    debugPrint('Firebase initialization notice: $e');
+  }
+
+  // Initialize RevenueCat
+  try {
+    await RevenueCatService.init();
+  } catch (e) {
+    debugPrint('RevenueCat initialization notice: $e');
+  }
+
   runApp(const StudyHiveApp());
 }
 

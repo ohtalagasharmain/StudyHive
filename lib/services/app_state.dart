@@ -290,6 +290,7 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   static const String backendUrl = 'http://localhost:8080';
 
   UserData _user = UserData(name: 'Study Hive', username: 'studyhive');
+  final Map<String, Map<String, String>> _registeredUsers = {};
   final List<HiveData> _hives = [];
   final List<UserSession> _sessions = [];
   final List<StudyMaterial> _savedResources = [];
@@ -309,6 +310,55 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
   List<QuizResult> get quizHistory => _quizHistory;
   bool get isDarkMode => _isDarkMode;
   String get languageCode => _languageCode;
+
+  Future<void> registerAccount({
+    required String email,
+    required String password,
+    required String name,
+    String? profilePicturePath,
+  }) async {
+    final normalizedEmail = email.trim().toLowerCase();
+    _registeredUsers[normalizedEmail] = {
+      'email': normalizedEmail,
+      'password': password,
+      'name': name,
+      if (profilePicturePath != null) 'profilePicturePath': profilePicturePath,
+    };
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('registered_users_db', jsonEncode(_registeredUsers));
+  }
+
+  bool hasLocalUser(String email) {
+    return _registeredUsers.containsKey(email.trim().toLowerCase());
+  }
+
+  bool checkLocalPassword(String email, String password) {
+    final normalizedEmail = email.trim().toLowerCase();
+    final account = _registeredUsers[normalizedEmail];
+    if (account == null) return false;
+    return account['password'] == password;
+  }
+
+  String? getLocalUserName(String email) {
+    final normalizedEmail = email.trim().toLowerCase();
+    return _registeredUsers[normalizedEmail]?['name'];
+  }
+
+  UserData? getUserDataForEmail(String email) {
+    final normalizedEmail = email.trim().toLowerCase();
+    final account = _registeredUsers[normalizedEmail];
+    if (account == null) return null;
+    return UserData(
+      name: account['name'] ?? email.split('@').first,
+      username: email.split('@').first,
+      bio: account['bio'] ?? 'Focused on learning, one session at a time.',
+      grade: account['grade'] ?? 'Grade 11',
+      subjects: account['subjects'] ?? 'Physics, Mathematics',
+      school: account['school'] ?? '',
+      profilePicturePath: account['profilePicturePath'],
+    );
+  }
 
   int get studyStreak {
     if (_sessions.isEmpty) return 0;
@@ -335,6 +385,33 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     final prefs = await SharedPreferences.getInstance();
     _isDarkMode = prefs.getBool('isDarkMode') ?? false;
     _languageCode = prefs.getString('languageCode') ?? 'en';
+
+    String? usersJson = prefs.getString('registered_users_db');
+    if (usersJson != null) {
+      try {
+        final Map<String, dynamic> decoded = jsonDecode(usersJson);
+        decoded.forEach((key, value) {
+          if (value is Map) {
+            _registeredUsers[key] = Map<String, String>.from(value);
+          }
+        });
+      } catch (e) {
+        debugPrint('Error loading registered users: $e');
+      }
+    }
+
+    if (_registeredUsers.isEmpty) {
+      _registeredUsers['studyhive@gmail.com'] = {
+        'email': 'studyhive@gmail.com',
+        'password': 'password123',
+        'name': 'Study Hive',
+      };
+      _registeredUsers['test@gmail.com'] = {
+        'email': 'test@gmail.com',
+        'password': 'password123',
+        'name': 'Test Student',
+      };
+    }
 
     String? userJson = prefs.getString('user_data');
     if (userJson != null) {
@@ -491,7 +568,9 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     }
     _user = newUser;
     final prefs = await SharedPreferences.getInstance();
-    prefs.setString('user_data', jsonEncode({
+
+    // 1. Save active user session
+    await prefs.setString('user_data', jsonEncode({
       'name': _user.name,
       'username': _user.username,
       'bio': _user.bio,
@@ -500,6 +579,30 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
       'school': _user.school,
       'profilePicturePath': _user.profilePicturePath,
     }));
+
+    // 2. Persist updated profile info into registered users account database
+    final uname = _user.username.trim().toLowerCase();
+    String? matchedEmail;
+    _registeredUsers.forEach((email, map) {
+      if (email == uname ||
+          email.split('@').first.toLowerCase() == uname ||
+          map['email']?.toLowerCase() == uname) {
+        matchedEmail = email;
+      }
+    });
+
+    if (matchedEmail != null) {
+      final userMap = _registeredUsers[matchedEmail!]!;
+      userMap['name'] = _user.name;
+      userMap['bio'] = _user.bio;
+      userMap['grade'] = _user.grade;
+      userMap['subjects'] = _user.subjects;
+      userMap['school'] = _user.school;
+      if (_user.profilePicturePath != null) {
+        userMap['profilePicturePath'] = _user.profilePicturePath!;
+      }
+      await prefs.setString('registered_users_db', jsonEncode(_registeredUsers));
+    }
 
     await restoreUserResources(_user.username);
     notifyListeners();

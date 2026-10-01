@@ -45,51 +45,64 @@ class _ChatPageState extends State<ChatPage> {
 
   Future<void> _attachFile() async {
     setState(() => _isAttaching = true);
+
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
+      final PlatformFile? file = await FilePicker.pickFile(
         type: FileType.custom,
-        allowedExtensions: ['pdf', 'doc', 'docx', 'png', 'jpg', 'jpeg'],
+        allowedExtensions: [
+          'pdf',
+          'doc',
+          'docx',
+          'png',
+          'jpg',
+          'jpeg',
+        ],
       );
 
-      if (result != null) {
-        PlatformFile file = result.files.first;
-        
-        // Basic size limit: 10MB
-        if (file.size > 10 * 1024 * 1024) {
+      if (file != null) {
+        final bytes = await file.readAsBytes();
+
+        if (bytes.length > 10 * 1024 * 1024) {
           if (!mounted) return;
+
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('File size too large. Max 10MB allowed.')),
+            const SnackBar(
+              content: Text('File size too large. Max 10MB allowed.'),
+            ),
           );
           return;
         }
 
-        if (!mounted) return;
-        final timeStr = TimeOfDay.now().format(context);
+        final now = DateTime.now();
+        final timeStr = '${now.hour % 12 == 0 ? 12 : now.hour % 12}:${now.minute.toString().padLeft(2, '0')} ${now.hour >= 12 ? 'PM' : 'AM'}';
 
-        final newMessage = ChatMessage(
+        final message = ChatMessage(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
-          sender: AppState().user.name,
-          text: 'Shared a file: ${file.name}',
+          sender: 'You',
+          text: 'Shared file: ${file.name}',
           time: timeStr,
           isOutgoing: true,
-          isFile: true,
           fileName: file.name,
-          filePath: file.path,
+          filePath: file.path ?? file.name,
+          isFile: true,
         );
 
-        AppState().sendMessage(widget.hiveId, newMessage);
-        _scrollToBottom();
+        AppState().sendMessage(widget.hiveId, message);
       }
     } catch (e) {
       if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error picking file: $e')),
+        SnackBar(
+          content: Text('Failed to attach file: $e'),
+        ),
       );
     } finally {
-      if (mounted) setState(() => _isAttaching = false);
+      if (mounted) {
+        setState(() => _isAttaching = false);
+      }
     }
   }
-
   void _sendMessage() {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
